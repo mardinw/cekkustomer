@@ -1,11 +1,12 @@
 package servers
 
 import (
-	"cekkustomer/configs"
 	"context"
 	"database/sql"
 	"log"
 	"time"
+
+	"cekkustomer.com/configs"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"

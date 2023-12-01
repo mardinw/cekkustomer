@@ -1,8 +1,6 @@
 package servers
 
 import (
-	"cekkustomer/api/routes"
-	"cekkustomer/configs"
 	"context"
 	"log"
 	"net/http"
@@ -11,6 +9,9 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"cekkustomer.com/api/routes"
+	"cekkustomer.com/configs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"

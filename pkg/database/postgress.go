@@ -1,12 +1,13 @@
 package database
 
 import (
-	"cekkustomer/configs"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"time"
+
+	"cekkustomer.com/configs"
 
 	"github.com/sethvargo/go-envconfig"
 )

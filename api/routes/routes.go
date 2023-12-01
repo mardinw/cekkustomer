@@ -1,9 +1,10 @@
 package routes
 
 import (
-	"cekkustomer/configs"
 	"context"
 	"log"
+
+	"cekkustomer.com/configs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"

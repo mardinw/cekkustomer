@@ -1,9 +1,10 @@
 package main
 
 import (
-	"cekkustomer/api/servers"
-	"cekkustomer/pkg/database"
 	"log"
+
+	"cekkustomer.com/api/servers"
+	"cekkustomer.com/pkg/database"
 
 	"github.com/joho/godotenv"
 )
