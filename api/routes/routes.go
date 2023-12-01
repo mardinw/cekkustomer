@@ -2,15 +2,17 @@ package routes
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
+	"cekkustomer.com/api/handlers/cekdata"
 	"cekkustomer.com/configs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 )
 
-func NewRoutes() *gin.Engine {
+func NewRoutes(db *sql.DB) *gin.Engine {
 	var config configs.AppConfiguration
 	if err := envconfig.Process(context.Background(), &config); err != nil {
 		log.Fatal(err.Error())
@@ -28,6 +30,11 @@ func NewRoutes() *gin.Engine {
 				"message": "pong",
 			})
 		})
+
+		dpt := v1.Group("/dpt")
+		{
+			dpt.GET("/dpt_kiaracondong", cekdata.GetDPT(db))
+		}
 	}
 
 	return router

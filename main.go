@@ -30,5 +30,5 @@ func main() {
 	servers.Migrate(db)
 	defer database.CloseDB()
 
-	servers.Run()
+	servers.Run(db)
 }

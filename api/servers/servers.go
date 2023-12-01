@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ import (
 	"github.com/sethvargo/go-envconfig"
 )
 
-func Run() error {
+func Run(db *sql.DB) error {
 	var config configs.AppConfiguration
 
 	if err := envconfig.Process(context.Background(), &config); err != nil {
@@ -34,7 +35,7 @@ func Run() error {
 
 	srv := &http.Server{
 		Addr:         ":" + strconv.Itoa(config.Port),
-		Handler:      routes.NewRoutes(),
+		Handler:      routes.NewRoutes(db),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

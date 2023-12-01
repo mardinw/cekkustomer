@@ -8,23 +8,19 @@ import (
 )
 
 type DPT struct {
-	ID             int64  `json:"id"`
-	KTP            string `json:"ktp"`
-	Nama           string `json:"nama"`
-	Lahir          string `json:"lahir"`
-	JenisKelamin   string `json:"jenis_kelamin"`
-	TPS            string `json:"tps"`
-	Kecamatan      string `json:"kecamatan"`
-	Kelurahan      string `json:"kelurahan"`
-	Kodepos        string `json:"kodepos"`
-	TempatTglLahir string `json:"ttl"`
-	Concat         string `json:"concat"`
-	Umur           int32  `json:"umur"`
+	CardNumber   int64          `json:"card_number"`
+	FirstName    string         `json:"nama"`
+	HomeAddress3 sql.NullString `json:"address_3"`
+	HomeAddress4 sql.NullString `json:"address_4"`
+	HomeZipCode  int32          `json:"zip_code"`
+	Kodepos      int32          `json:"kodepos"`
+	Kelurahan    string         `json:"kelurahan"`
+	Kecamatan    string         `json:"kecamatan"`
 }
 
 func (dpt *DPT) GetAll(db *sql.DB) ([]DPT, error) {
 	query := `
-	SELECT * FROM dpt_kiaracondong
+	select t1.card_number AS card_number,t1.first_name AS first_name,t1.home_address_3 AS home_address_3,t1.home_address_4 AS home_address_4,t1.home_zip_code AS home_zip_code,t2.kodepos AS kodepos,t2.kel AS kel,t2.kec AS kec from (datadpt.customer t1 join datadpt.dpt_cibeunyingkidul t2 on((t1.concat_customer = t2.concat)))
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -41,16 +37,14 @@ func (dpt *DPT) GetAll(db *sql.DB) ([]DPT, error) {
 	for rows.Next() {
 		var each = DPT{}
 		var err = rows.Scan(
-			&each.ID,
-			&each.KTP,
-			&each.Nama,
-			&each.Lahir,
-			&each.JenisKelamin,
-			&each.Kelurahan,
+			&each.CardNumber,
+			&each.FirstName,
+			&each.HomeAddress3,
+			&each.HomeAddress4,
+			&each.HomeZipCode,
 			&each.Kodepos,
-			&each.TempatTglLahir,
-			&each.Concat,
-			&each.Umur,
+			&each.Kecamatan,
+			&each.Kelurahan,
 		)
 		if err != nil {
 			log.Println("record not found")
