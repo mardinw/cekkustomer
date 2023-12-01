@@ -14,5 +14,5 @@ type DBConfig struct {
 	ReadEndPoint string `env:"READ_ENDPOINT"`
 	Name         string `env:"DB_NAME,default=postgress"`
 	User         string `env:"DB_USER,default=postgress"`
-	Password     string `env:"DB_PASWORD"`
+	Password     string `env:"DB_PASSWORD"`
 }

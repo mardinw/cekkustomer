@@ -26,6 +26,7 @@ func main() {
 		log.Println("connection pool successfully")
 	}
 
+	servers.Migrate(db)
 	defer database.CloseDB()
 
 	servers.Run()
