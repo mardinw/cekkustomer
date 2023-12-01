@@ -1,15 +1,20 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"cekkustomer/api/servers"
+	"log"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
 
-	})
-	r.Run() // listen and serve on 0.0.0.0:8080
+	err := godotenv.Load()
+	if err != nil {
+		log.Println(err.Error())
+	} else {
+		log.Println("connection successfully")
+	}
 
+	servers.Run()
 }
