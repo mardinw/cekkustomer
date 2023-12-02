@@ -31,9 +31,9 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 			})
 		})
 
-		dpt := v1.Group("/dpt")
+		check := v1.Group("/check")
 		{
-			dpt.GET("/dpt_kiaracondong", cekdata.GetDPT(db))
+			check.GET("/match", cekdata.GetDPT(db))
 		}
 	}
 
