@@ -3,8 +3,11 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type DPT struct {
@@ -52,7 +55,7 @@ func GetAllKec(db *sql.DB) ([]string, error) {
 }
 
 func (dpt *DPT) GetAll(db *sql.DB, tableName string) ([]DPT, error) {
-	query := `
+	query := fmt.Sprintf(`
 	select t1.card_number AS card_number,
 	t1.collector AS collector,
 	t1.first_name AS first_name,
@@ -62,8 +65,9 @@ func (dpt *DPT) GetAll(db *sql.DB, tableName string) ([]DPT, error) {
 	t2.kodepos AS kodepos,
 	t2.kel AS kel,
 	t2.kec AS kec from customer AS t1 
-	JOIN ` + tableName + ` AS t2 ON t1.concat_customer = t2.concat
-	`
+	JOIN %s AS t2 ON t1.concat_customer = t2.concat
+	`, pq.QuoteIdentifier(tableName))
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
