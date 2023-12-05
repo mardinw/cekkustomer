@@ -8,6 +8,7 @@ import (
 	"cekkustomer.com/api/handlers/cekdata"
 	"cekkustomer.com/configs"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 )
@@ -20,6 +21,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 
 	router := gin.Default()
 
+	router.Use(cors.Default())
 	router.Use(gin.Logger())
 	router.HandleMethodNotAllowed = true
 
@@ -34,6 +36,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		check := v1.Group("/check")
 		{
 			check.GET("/match", cekdata.GetDPT(db))
+			check.GET("/locate", cekdata.GetKec(db))
 		}
 	}
 

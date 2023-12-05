@@ -9,7 +9,8 @@ import (
 
 type DPT struct {
 	CardNumber   int64          `json:"card_number"`
-	FirstName    string         `json:"nama"`
+	Collector    string         `json:"collector"`
+	FirstName    string         `json:"first_name"`
 	HomeAddress3 sql.NullString `json:"address_3"`
 	HomeAddress4 sql.NullString `json:"address_4"`
 	HomeZipCode  int32          `json:"zip_code"`
@@ -18,9 +19,42 @@ type DPT struct {
 	Kecamatan    string         `json:"kecamatan"`
 }
 
-func (dpt *DPT) GetAll(db *sql.DB) ([]DPT, error) {
+func GetAllKec(db *sql.DB) ([]string, error) {
+	query := `
+	SELECT tablename FROM pg_catalog.pg_tables WHERE tablename like 'dpt_%'
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var result []string
+	for rows.Next() {
+		var each string
+		var err = rows.Scan(
+			&each,
+		)
+		if err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+		result = append(result, each)
+	}
+
+	return result, nil
+}
+
+func (dpt *DPT) GetAll(db *sql.DB, tableName string) ([]DPT, error) {
 	query := `
 	select t1.card_number AS card_number,
+	t1.collector AS collector,
 	t1.first_name AS first_name,
 	t1.home_address_3 AS home_address_3,
 	t1.home_address_4 AS home_address_4,
@@ -28,7 +62,7 @@ func (dpt *DPT) GetAll(db *sql.DB) ([]DPT, error) {
 	t2.kodepos AS kodepos,
 	t2.kel AS kel,
 	t2.kec AS kec from customer AS t1 
-	JOIN dpt_cibeunyingkidul AS t2 ON t1.concat_customer = t2.concat
+	JOIN ` + tableName + ` AS t2 ON t1.concat_customer = t2.concat
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -46,6 +80,7 @@ func (dpt *DPT) GetAll(db *sql.DB) ([]DPT, error) {
 		var each = DPT{}
 		var err = rows.Scan(
 			&each.CardNumber,
+			&each.Collector,
 			&each.FirstName,
 			&each.HomeAddress3,
 			&each.HomeAddress4,
