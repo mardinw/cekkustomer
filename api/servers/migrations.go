@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/aws_s3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/sethvargo/go-envconfig"
 )
@@ -31,7 +32,7 @@ func Migrate(db *sql.DB) error {
 
 	if config.AppEnv == "production" {
 		migrator, err := migrate.NewWithDatabaseInstance(
-			"s3://db-migrate-src",
+			"s3://dbmigrate-src",
 			"postgres", driver,
 		)
 		if err != nil {
