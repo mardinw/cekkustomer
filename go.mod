@@ -3,7 +3,6 @@ module cekkustomer.com
 go 1.21
 
 require (
-	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/aws/aws-sdk-go-v2 v1.23.5
 	github.com/aws/aws-sdk-go-v2/config v1.25.11
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.4
@@ -16,6 +15,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.2
 	github.com/sethvargo/go-envconfig v0.9.0
+	github.com/xuri/excelize/v2 v2.8.0
 )
 
 require (
@@ -61,7 +61,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xuri/efp v0.0.0-20231025114914-d1ff6096ae53 // indirect
-	github.com/xuri/excelize/v2 v2.8.0 // indirect
 	github.com/xuri/nfp v0.0.0-20230919160717-d98342af3f05 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/arch v0.6.0 // indirect
