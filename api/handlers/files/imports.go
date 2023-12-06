@@ -2,7 +2,9 @@ package files
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"cekkustomer.com/api/middlewares"
@@ -47,6 +49,12 @@ func ImportExcel(ctx *gin.Context) {
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
+		}
+
+		if err := os.Remove(filePath); err != nil {
+			log.Println("Failed to remove uploaded file:", err.Error())
+		} else {
+			log.Println("File removed successfully:", filePath)
 		}
 		ctx.JSON(http.StatusOK, gin.H{
 			"location_file": uploadFile,
