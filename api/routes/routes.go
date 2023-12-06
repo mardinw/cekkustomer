@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"cekkustomer.com/api/handlers/cekdata"
+	"cekkustomer.com/api/handlers/files"
 	"cekkustomer.com/configs"
 
 	"github.com/gin-contrib/cors"
@@ -27,16 +28,15 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 
 	v1 := router.Group("/v1")
 	{
-		v1.GET("/ping", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"message": "pong",
-			})
-		})
-
 		check := v1.Group("/check")
 		{
 			check.GET("/match", cekdata.GetDPT(db))
 			check.GET("/locate", cekdata.GetKec(db))
+		}
+
+		file := v1.Group("/files")
+		{
+			file.POST("/import", files.ImportExcel)
 		}
 	}
 
