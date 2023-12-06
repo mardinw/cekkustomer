@@ -1,35 +1,38 @@
 package middlewares
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/xuri/excelize/v2"
 )
 
-type MapCustomer map[string]interface{}
+type MapCustomer []map[string]interface{}
 
-func ReadExcel(fileName string) {
-	file, err := excelize.OpenFile(fileName)
+func ReadExcel(fileName string) (MapCustomer, error) {
+	xlsx, err := excelize.OpenFile(fileName)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	defer file.Close()
+	sheetName := xlsx.GetSheetList()[0]
 
-	sheets := file.GetSheetList()
-
-	for _, sheet := range sheets {
-		rows, err := file.GetRows(sheet)
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-
-		for rowIndex, row := range rows {
-			for colIndex, cell := range row {
-				log.Printf("Sheet: %s, Row: %d, Col: %d, Value: %s\n", sheet, rowIndex+1, colIndex+1, cell)
-			}
-		}
+	rows, err := xlsx.GetRows(sheetName)
+	if err != nil {
+		log.Println(err.Error())
 	}
+
+	// konversi data excel to json
+	var result MapCustomer
+	keys := rows[0]
+	for _, row := range rows[1:] {
+		rowData := make(map[string]interface{})
+		for colIndex, cell := range row {
+			key := keys[colIndex]
+			rowData[key] = cell
+		}
+
+		result = append(result, rowData)
+	}
+
+	return result, err
 }
