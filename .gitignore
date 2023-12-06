@@ -1,2 +1,5 @@
 dpt.sql
 .env
+
+external/importxclxit
+external/exporttxclxit
