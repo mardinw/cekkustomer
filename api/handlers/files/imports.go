@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/pkg/aws"
@@ -17,6 +18,7 @@ const (
 )
 
 func ImportExcel(ctx *gin.Context) {
+
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -56,6 +58,17 @@ func ImportExcel(ctx *gin.Context) {
 		} else {
 			log.Println("File removed successfully:", filePath)
 		}
+
+		uploadedTime := time.Now().UnixMicro()
+		agencies := "mardin"
+
+		// record to dynamodb
+		err = aws.NewConnect().DynamoDB.AddImportXlsx("import_xlsx", agencies, uploadFile, uploadedTime)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"location_file": uploadFile,
 			"data":          jsonData,
