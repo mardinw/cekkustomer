@@ -1,34 +1,28 @@
 package files
 
 import (
-	"encoding/json"
 	"net/http"
-	"path/filepath"
 
 	"cekkustomer.com/api/middlewares"
+	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
 )
 
 func ReadFile(ctx *gin.Context) {
-	file, err := ctx.FormFile("file")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	bucketName := "importxclxit"
+	fileName := "sample_cekkustomer.xlsx"
 
-	fileName := file.Filename
-	filePath := filepath.Join(uploadFolder, fileName)
-	readFile, err := middlewares.ReadExcel(filePath)
+	getFile, err := aws.NewConnect().S3.GetFile(bucketName, fileName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	// convert the result json
-	jsonData, err := json.Marshal(readFile)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read json"})
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusOK, gin.H{"data": jsonData})
+	readFile, err := middlewares.ReadExcel(getFile.Body)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": readFile})
 }

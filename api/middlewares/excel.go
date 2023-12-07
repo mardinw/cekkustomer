@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"io"
 	"log"
 
 	"github.com/xuri/excelize/v2"
@@ -8,8 +9,8 @@ import (
 
 type MapCustomer []map[string]interface{}
 
-func ReadExcel(fileName string) (MapCustomer, error) {
-	xlsx, err := excelize.OpenFile(fileName)
+func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
+	xlsx, err := excelize.OpenReader(fileName)
 	if err != nil {
 		log.Println(err.Error())
 	}

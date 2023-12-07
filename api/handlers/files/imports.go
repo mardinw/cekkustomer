@@ -1,14 +1,12 @@
 package files
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
-	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
 )
@@ -32,17 +30,17 @@ func ImportExcel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	readFile, err := middlewares.ReadExcel(filePath)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
+	// readFile, err := middlewares.ReadExcel(filePath)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// }
 
-	// convert the result json
-	jsonData, err := json.Marshal(readFile)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read json"})
-		return
-	}
+	// // convert the result json
+	// jsonData, err := json.Marshal(readFile)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read json"})
+	// 	return
+	// }
 
 	checkFile := aws.NewConnect().S3.CheckExists(ctx, "importxclxit", fileName)
 
@@ -71,7 +69,6 @@ func ImportExcel(ctx *gin.Context) {
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"location_file": uploadFile,
-			"data":          jsonData,
 		})
 	} else {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "nama file telah ada"})
