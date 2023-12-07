@@ -5,12 +5,14 @@ import (
 	"log"
 
 	"cekkustomer.com/configs"
+	"cekkustomer.com/pkg/database"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/sethvargo/go-envconfig"
 )
 
 type AwsConnect struct {
-	S3 *AwsS3
+	S3       *AwsS3
+	DynamoDB *database.AwsDynamoDB
 }
 
 func NewConnect() *AwsConnect {
@@ -34,6 +36,7 @@ func NewConnect() *AwsConnect {
 	}
 
 	return &AwsConnect{
-		S3: NewS3Connect(&cfg),
+		S3:       NewS3Connect(&cfg),
+		DynamoDB: database.NewDynamoDBConnect(&cfg),
 	}
 }
