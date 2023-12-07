@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"log"
 	"os"
@@ -25,6 +26,28 @@ func NewS3Connect(config *aws.Config) *AwsS3 {
 }
 
 var apiError smithy.APIError
+
+func (c *AwsS3) GetFile(bucketName, fileName string) (*s3.GetObjectOutput, error) {
+	var err error
+
+	result, err := c.client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fileName),
+	})
+
+	defer func() {
+		if err != nil {
+			result.Body.Close()
+		}
+	}()
+
+	if err != nil {
+		log.Printf("Couldn't get object %v:%v. Here's why: %v\n", bucketName, fileName, err)
+		return nil, err
+	}
+
+	return result, err
+}
 
 func (c *AwsS3) UploadFile(ctx *gin.Context, bucketName, fileName, filePath string) (string, error) {
 
