@@ -20,9 +20,9 @@ func ReadFile(ctx *gin.Context) {
 
 	readFile, err := middlewares.ReadExcel(getFile.Body)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": readFile})
+	ctx.JSON(http.StatusOK, readFile)
 }

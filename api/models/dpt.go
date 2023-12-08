@@ -7,20 +7,9 @@ import (
 	"log"
 	"time"
 
+	"cekkustomer.com/dtos"
 	"github.com/lib/pq"
 )
-
-type DPT struct {
-	CardNumber   int64          `json:"card_number"`
-	Collector    string         `json:"collector"`
-	FirstName    string         `json:"first_name"`
-	HomeAddress3 sql.NullString `json:"address_3"`
-	HomeAddress4 sql.NullString `json:"address_4"`
-	HomeZipCode  int32          `json:"zip_code"`
-	Kodepos      int32          `json:"kodepos"`
-	Kelurahan    string         `json:"kelurahan"`
-	Kecamatan    string         `json:"kecamatan"`
-}
 
 func GetAllKec(db *sql.DB) ([]string, error) {
 	query := `
@@ -54,7 +43,7 @@ func GetAllKec(db *sql.DB) ([]string, error) {
 	return result, nil
 }
 
-func (dpt *DPT) GetAll(db *sql.DB, tableName string) ([]DPT, error) {
+func GetAll(db *sql.DB, tableName string) ([]dtos.DPT, error) {
 	query := fmt.Sprintf(`
 	select t1.card_number AS card_number,
 	t1.collector AS collector,
@@ -79,9 +68,9 @@ func (dpt *DPT) GetAll(db *sql.DB, tableName string) ([]DPT, error) {
 
 	defer rows.Close()
 
-	var result []DPT
+	var result []dtos.DPT
 	for rows.Next() {
-		var each = DPT{}
+		var each = dtos.DPT{}
 		var err = rows.Scan(
 			&each.CardNumber,
 			&each.Collector,

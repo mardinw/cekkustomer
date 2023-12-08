@@ -30,18 +30,6 @@ func ImportExcel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	// readFile, err := middlewares.ReadExcel(filePath)
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// }
-
-	// // convert the result json
-	// jsonData, err := json.Marshal(readFile)
-	// if err != nil {
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read json"})
-	// 	return
-	// }
-
 	checkFile := aws.NewConnect().S3.CheckExists(ctx, "importxclxit", fileName)
 
 	if !checkFile {

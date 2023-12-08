@@ -24,8 +24,6 @@ func GetKec(db *sql.DB) gin.HandlerFunc {
 func GetDPT(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
-		var dpt models.DPT
-
 		getKec, err := models.GetAllKec(db)
 		if err != nil {
 			log.Println(err.Error())
@@ -35,7 +33,7 @@ func GetDPT(db *sql.DB) gin.HandlerFunc {
 		results := make(map[string]interface{})
 
 		for _, tableName := range getKec {
-			result, err := dpt.GetAll(db, tableName)
+			result, err := models.GetAll(db, tableName)
 			if err != nil {
 				ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 				return
