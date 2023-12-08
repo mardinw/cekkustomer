@@ -27,6 +27,30 @@ func NewS3Connect(config *aws.Config) *AwsS3 {
 
 var apiError smithy.APIError
 
+func (c *AwsS3) DownloadFile(bucketName, fileName string) error {
+	var err error
+
+	downloader := manager.NewDownloader(c.client)
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	params := &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fileName),
+	}
+
+	_, err = downloader.Download(context.TODO(), file, params)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *AwsS3) GetFile(bucketName, fileName string) (*s3.GetObjectOutput, error) {
 	var err error
 

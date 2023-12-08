@@ -38,6 +38,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		{
 			file.POST("/import", files.ImportExcel)
 			file.GET("/read", files.ReadFile)
+			file.GET("/download/:filename", files.DownloadSampleXlsx)
 		}
 	}
 
