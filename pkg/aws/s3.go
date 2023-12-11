@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -59,20 +60,25 @@ func (c *AwsS3) DownloadFile(bucketName, objectKey, fileName string) error {
 	return err
 }
 
-func (c *AwsS3) ListFile(bucketName, folder string) ([]types.Object, error) {
+func (c *AwsS3) ListFile(bucketName, folder string) ([]string, error) {
 	result, err := c.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(folder),
 	})
 
-	var contents []types.Object
-	if err != nil {
-		log.Printf("Couldn't list objects in bucket %v. Here's why: %v\n", bucketName, err)
-	} else {
-		contents = result.Contents
+	var fileList []string
+	// if err != nil {
+	// 	log.Printf("Couldn't list objects in bucket %v. Here's why: %v\n", bucketName, err)
+	// } else {
+	// 	contents = result.Contents
+	// }
+	for _, item := range result.Contents {
+		if !strings.HasSuffix(*item.Key, "/") {
+			fileList = append(fileList, *item.Key)
+		}
 	}
 
-	return contents, err
+	return fileList, err
 }
 
 func (c *AwsS3) GetFile(bucketName, fileName string) (*s3.GetObjectOutput, error) {

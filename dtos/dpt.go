@@ -13,3 +13,10 @@ type DPT struct {
 	Kelurahan    string         `json:"kelurahan"`
 	Kecamatan    string         `json:"kecamatan"`
 }
+
+type CheckDPT struct {
+	Nama      string `json:"nama"`
+	Kodepos   int32  `json:"kodepos"`
+	Kelurahan string `json:"kelurahan"`
+	Kecamatan string `json:"kecamatan"`
+}
