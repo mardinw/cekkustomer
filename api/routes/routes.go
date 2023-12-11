@@ -37,7 +37,8 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		file := v1.Group("/files")
 		{
 			file.POST("/import", files.ImportExcel)
-			file.GET("/read", files.ReadFile)
+			file.GET("/read/:filename", files.ReadFile)
+			file.GET("/list/:folder", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
 		}
 	}

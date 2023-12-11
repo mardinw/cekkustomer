@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
+	"strings"
 
 	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
@@ -24,12 +24,22 @@ func ImportExcel(ctx *gin.Context) {
 	}
 
 	fileName := file.Filename
+
+	// check file
+	allowedExtension := []string{".xlsx", ".xls"}
+	if !isAllowedExtension(fileName, allowedExtension) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "file format only xlsx and xls"})
+		return
+	}
+
 	filePath := filepath.Join(uploadFolder, fileName)
 
 	if err := ctx.SaveUploadedFile(file, filePath); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
+	// check file exists
 	checkFile := aws.NewConnect().S3.CheckExists(ctx, "importxclxit", fileName)
 
 	if !checkFile {
@@ -45,16 +55,6 @@ func ImportExcel(ctx *gin.Context) {
 			log.Println("File removed successfully:", filePath)
 		}
 
-		uploadedTime := time.Now().UnixMicro()
-		agencies := "mardin"
-
-		// record to dynamodb
-		err = aws.NewConnect().DynamoDB.AddImportXlsx("import_xlsx", agencies, uploadFile, uploadedTime)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-			return
-		}
-
 		ctx.JSON(http.StatusOK, gin.H{
 			"location_file": uploadFile,
 		})
@@ -62,4 +62,14 @@ func ImportExcel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "nama file telah ada"})
 	}
 
+}
+
+func isAllowedExtension(fileName string, allowedExtension []string) bool {
+	for _, ext := range allowedExtension {
+		if strings.HasSuffix(fileName, ext) {
+			return true
+		}
+	}
+
+	return false
 }

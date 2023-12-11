@@ -10,7 +10,7 @@ import (
 
 func ReadFile(ctx *gin.Context) {
 	bucketName := "importxclxit"
-	fileName := "sample_cekkustomer.xlsx"
+	fileName := ctx.Param("filename")
 
 	getFile, err := aws.NewConnect().S3.GetFile(bucketName, fileName)
 	if err != nil {

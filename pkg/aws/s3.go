@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"errors"
+	"io"
 	"log"
 	"os"
 
@@ -27,28 +28,51 @@ func NewS3Connect(config *aws.Config) *AwsS3 {
 
 var apiError smithy.APIError
 
-func (c *AwsS3) DownloadFile(bucketName, fileName string) error {
-	var err error
+func (c *AwsS3) DownloadFile(bucketName, objectKey, fileName string) error {
 
-	downloader := manager.NewDownloader(c.client)
+	resp, err := c.client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
+	defer resp.Body.Close()
 
 	file, err := os.Create(fileName)
 	if err != nil {
+		log.Printf("couldn't create file %v. Here why : %v\n", file, err.Error())
 		return err
 	}
+
 	defer file.Close()
 
-	params := &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(fileName),
-	}
-
-	_, err = downloader.Download(context.TODO(), file, params)
+	fileContent, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	_, err = file.Write(fileContent)
+	return err
+}
+
+func (c *AwsS3) ListFile(bucketName, folder string) ([]types.Object, error) {
+	result, err := c.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+		Prefix: aws.String(folder),
+	})
+
+	var contents []types.Object
+	if err != nil {
+		log.Printf("Couldn't list objects in bucket %v. Here's why: %v\n", bucketName, err)
+	} else {
+		contents = result.Contents
+	}
+
+	return contents, err
 }
 
 func (c *AwsS3) GetFile(bucketName, fileName string) (*s3.GetObjectOutput, error) {
