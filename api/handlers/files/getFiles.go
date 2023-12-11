@@ -49,5 +49,5 @@ func GetListFolder(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, objects)
+	ctx.JSON(http.StatusOK, gin.H{"files": objects})
 }

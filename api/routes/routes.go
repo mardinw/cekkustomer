@@ -32,6 +32,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		{
 			check.GET("/match", cekdata.GetDPT(db))
 			check.GET("/locate", cekdata.GetKec(db))
+			check.GET("/look", cekdata.CheckDPT(db))
 		}
 
 		file := v1.Group("/files")
