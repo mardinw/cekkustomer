@@ -1,6 +1,7 @@
 package files
 
 import (
+	"fmt"
 	"net/http"
 
 	"cekkustomer.com/api/middlewares"
@@ -11,10 +12,13 @@ import (
 func ReadFile(ctx *gin.Context) {
 	bucketName := "importxclxit"
 	fileName := ctx.Param("filename")
+	folderUser := ctx.Param("foldername")
 
-	getFile, err := aws.NewConnect().S3.GetFile(bucketName, fileName)
+	filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
+
+	getFile, err := aws.NewConnect().S3.GetFile(bucketName, filePath)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 

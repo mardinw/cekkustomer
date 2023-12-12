@@ -103,9 +103,9 @@ func (c *AwsS3) GetFile(bucketName, fileName string) (*s3.GetObjectOutput, error
 	return result, err
 }
 
-func (c *AwsS3) UploadFile(ctx *gin.Context, bucketName, fileName, filePath string) (string, error) {
+func (c *AwsS3) UploadFile(bucketName, localFilePath, objectKey string) error {
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(localFilePath)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -113,18 +113,17 @@ func (c *AwsS3) UploadFile(ctx *gin.Context, bucketName, fileName, filePath stri
 
 	uploader := manager.NewUploader(c.client)
 
-	res, err := uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Body:   file,
-		Key:    aws.String(fileName),
+		Key:    aws.String(objectKey),
 	})
 
 	if err != nil {
-		log.Println(err)
-		return "", err
+		log.Println(err.Error())
+		return err
 	}
-
-	return res.Location, err
+	return nil
 }
 
 func (c *AwsS3) CheckExists(ctx *gin.Context, bucketName, fileName string) bool {
