@@ -11,11 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	uploadFolder = "external/importxclxit"
-)
-
 func ImportExcel(ctx *gin.Context) {
+
+	localUploadDir := "./uploads"
+	uploadFolder := "folder-user"
+	bucketName := "importxclxit"
 
 	file, err := ctx.FormFile("file")
 	if err != nil {
@@ -32,19 +32,20 @@ func ImportExcel(ctx *gin.Context) {
 		return
 	}
 
-	filePath := filepath.Join(uploadFolder, fileName)
+	filePath := filepath.Join(localUploadDir, fileName)
 
 	if err := ctx.SaveUploadedFile(file, filePath); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	s3FilePath := filepath.Join(uploadFolder, fileName)
 	// check file exists
-	checkFile := aws.NewConnect().S3.CheckExists(ctx, "importxclxit", fileName)
+	checkFile := aws.NewConnect().S3.CheckExists(ctx, bucketName, s3FilePath)
 
 	if !checkFile {
-		uploadFile, err := aws.NewConnect().S3.UploadFile(ctx, "importxclxit", fileName, filePath)
-		if err != nil {
+		if err := aws.NewConnect().S3.UploadFile(bucketName, filePath, s3FilePath); err != nil {
+			log.Println("Failed to upload file to S3:", err.Error())
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -56,7 +57,7 @@ func ImportExcel(ctx *gin.Context) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"location_file": uploadFile,
+			"message": "successfully upload",
 		})
 	} else {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "nama file telah ada"})

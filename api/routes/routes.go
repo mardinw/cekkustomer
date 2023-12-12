@@ -32,13 +32,13 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		{
 			check.GET("/match", cekdata.GetDPT(db))
 			check.GET("/locate", cekdata.GetKec(db))
-			check.GET("/look", cekdata.CheckDPT(db))
+			check.GET("/look/:filename", cekdata.CheckDPT(db))
 		}
 
 		file := v1.Group("/files")
 		{
 			file.POST("/import", files.ImportExcel)
-			file.GET("/read/:filename", files.ReadFile)
+			file.GET("/read/:foldername/:filename", files.ReadFile)
 			file.GET("/list/:folder", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
 		}
