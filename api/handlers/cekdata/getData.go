@@ -2,6 +2,7 @@ package cekdata
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,31 +24,6 @@ func GetKec(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func GetDPT(db *sql.DB) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-
-		getKec, err := models.GetAllKec(db)
-		if err != nil {
-			log.Println(err.Error())
-			return
-		}
-
-		results := make(map[string]interface{})
-
-		for _, tableName := range getKec {
-			result, err := models.GetAll(db, tableName)
-			if err != nil {
-				ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-				return
-			}
-
-			results[tableName] = result
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{"results": results})
-	}
-}
-
 func CheckDPT(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
@@ -60,13 +36,16 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		results := make(map[string]interface{})
 
 		// readfile excel
-		//	fileName := "cekmardin.xlsx"
-		//	s3Folder := "folder-user/" + fileName
 		fileName := ctx.Param("filename")
+		folderUser := ctx.Param("foldername")
+
 		bucketName := "importxclxit"
 
-		getFile, err := aws.NewConnect().S3.GetFile(bucketName, fileName)
+		filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
+
+		getFile, err := aws.NewConnect().S3.GetFile(bucketName, filePath)
 		if err != nil {
+			log.Println(err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -93,12 +72,13 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 				}
 
 				if len(result) > 0 {
-					results[tableName] = result
+					data["db_match"] = result
+					results[tableName] = data
 				}
 			}
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
+		ctx.IndentedJSON(http.StatusOK, gin.H{
 			"results": results,
 		})
 	}
