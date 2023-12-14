@@ -40,6 +40,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 			file.GET("/read/:foldername/:filename", files.ReadFile)
 			file.GET("/list/:folder", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
+			file.DELETE("/:foldername/:filename", files.DeleteFile)
 		}
 	}
 

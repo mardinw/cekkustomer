@@ -194,15 +194,15 @@ func (c *AwsS3) BucketExists(ctx *gin.Context, bucketName string) (bool, error) 
 	return exists, err
 }
 
-func (c *AwsS3) DeleteFile(ctx *gin.Context, bucketName, fileName string) error {
-	_, err := c.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+func (c *AwsS3) DeleteFile(bucketName, objectKey string) error {
+	_, err := c.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(fileName),
+		Key:    aws.String(objectKey),
 	})
 
 	if err != nil {
-		return err
+		log.Printf("Couldn't delete objects from bucket %v with files %v. Here's why: %v\n", bucketName, objectKey, err)
 	}
 
-	return nil
+	return err
 }

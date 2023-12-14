@@ -55,7 +55,6 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		// definisikan array
 
 		//
 		for _, tableName := range getKec {
@@ -78,6 +77,18 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
+		// if len(results) > 0 {
+		// 	jsonData, err := json.Marshal(results)
+		// 	if err != nil {
+		// 		log.Println(err)
+		// 		return
+		// 	}
+
+		// 	if err := middlewares.CreateExcel(string(jsonData)); err != nil {
+		// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		// 		return
+		// 	}
+		// }
 		ctx.IndentedJSON(http.StatusOK, gin.H{
 			"results": results,
 		})
