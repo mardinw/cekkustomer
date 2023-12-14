@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strconv"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -84,12 +83,12 @@ func CreateExcel(jsonData string) error {
 	file := excelize.NewFile()
 
 	sheetName := "Match Data"
-	headers := []string{"Card Number", "First Name", "Collector", "Agencies", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Nama", "Kelurahan", "Kecamatan", "Lokasi"}
+	headers := []string{"Card Number", "First Name", "Collector", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Nama", "Kelurahan", "Kecamatan", "Lokasi"}
 	file.SetSheetName(file.GetSheetName(0), sheetName)
 	file.SetCellValue(sheetName, "A1", "Data Customer")
-	file.SetCellValue(sheetName, "H1", "Data Match")
-	file.MergeCell(sheetName, "A1", "G1")
-	file.MergeCell(sheetName, "H1", "L1")
+	file.SetCellValue(sheetName, "G1", "Data Match")
+	file.MergeCell(sheetName, "A1", "F1")
+	file.MergeCell(sheetName, "G1", "K1")
 
 	// Membuat table header untuk data
 	for colIndex, header := range headers {
@@ -97,31 +96,55 @@ func CreateExcel(jsonData string) error {
 		file.SetCellValue(sheetName, fmt.Sprintf("%s2", colName), header)
 	}
 
-	if err := file.AutoFilter(sheetName, "A2:L2", []excelize.AutoFilterOptions{}); err != nil {
-		log.Fatal("Error", err.Error())
-	}
-
 	// tambahkan data ke sheet
 	rowIndex := 3
 	for tableName, tableData := range data {
-		for _, rowData := range tableData.(map[string]interface{})["db_match"].([]interface{}) {
-			for colIndex, colValue := range rowData.(map[string]interface{}) {
-				colIndexConv, err := strconv.Atoi(colIndex)
-				if err != nil {
-					log.Println(err.Error())
-				}
-				colName, _ := excelize.ColumnNumberToName(colIndexConv + 1)
-				file.SetCellValue(sheetName, fmt.Sprintf("%s%d", colName, rowIndex), colValue)
+		// data customer
+		for colName, colValueCustomer := range tableData.(map[string]interface{}) {
+			switch colName {
+			case "card_number":
+				file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), colValueCustomer)
+			case "first_name":
+				file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), colValueCustomer)
+			case "collector":
+				file.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), colValueCustomer)
+			case "address_3":
+				file.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), colValueCustomer)
+			case "address_4":
+				file.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), colValueCustomer)
+			case "home_zip_code":
+				file.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), colValueCustomer)
+			default:
+				log.Println("Key tidak diketahui")
 			}
 
-			// tambah table nama
-			file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), tableName)
+		}
+
+		// ambil data match
+		for _, rowData := range tableData.(map[string]interface{})["db_match"].([]interface{}) {
+			for colName, colValue := range rowData.(map[string]interface{}) {
+				switch colName {
+				case "kodepos":
+					file.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), colValue)
+				case "nama":
+					file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), colValue)
+				case "kelurahan":
+					file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), colValue)
+				case "kecamatan":
+					file.SetCellValue(sheetName, fmt.Sprintf("J%d", rowIndex), colValue)
+				default:
+					log.Println("Key tidak dikenali")
+				}
+			}
+
+			// tambah lokasi
+			file.SetCellValue(sheetName, fmt.Sprintf("K%d", rowIndex), tableName)
 			rowIndex++
 		}
 	}
 
 	// set autofilter
-	if err := file.AutoFilter(sheetName, "A2:L2", []excelize.AutoFilterOptions{}); err != nil {
+	if err := file.AutoFilter(sheetName, "A2:K2", []excelize.AutoFilterOptions{}); err != nil {
 		log.Fatal("Error", err.Error())
 	}
 

@@ -2,6 +2,7 @@ package cekdata
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -77,18 +78,18 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		// if len(results) > 0 {
-		// 	jsonData, err := json.Marshal(results)
-		// 	if err != nil {
-		// 		log.Println(err)
-		// 		return
-		// 	}
+		if len(results) > 0 {
+			jsonData, err := json.Marshal(results)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 
-		// 	if err := middlewares.CreateExcel(string(jsonData)); err != nil {
-		// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// 		return
-		// 	}
-		// }
+			if err := middlewares.CreateExcel(string(jsonData)); err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
 		ctx.IndentedJSON(http.StatusOK, gin.H{
 			"results": results,
 		})
