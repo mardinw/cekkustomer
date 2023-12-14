@@ -1,9 +1,12 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
+	"strconv"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -68,4 +71,65 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 	}
 
 	return result, err
+}
+
+func CreateExcel(jsonData string) error {
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
+		return err
+	}
+
+	// membuat file excel
+
+	file := excelize.NewFile()
+
+	sheetName := "Match Data"
+	headers := []string{"Card Number", "First Name", "Collector", "Agencies", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Nama", "Kelurahan", "Kecamatan", "Lokasi"}
+	file.SetSheetName(file.GetSheetName(0), sheetName)
+	file.SetCellValue(sheetName, "A1", "Data Customer")
+	file.SetCellValue(sheetName, "H1", "Data Match")
+	file.MergeCell(sheetName, "A1", "G1")
+	file.MergeCell(sheetName, "H1", "L1")
+
+	// Membuat table header untuk data
+	for colIndex, header := range headers {
+		colName, _ := excelize.ColumnNumberToName(colIndex + 1)
+		file.SetCellValue(sheetName, fmt.Sprintf("%s2", colName), header)
+	}
+
+	if err := file.AutoFilter(sheetName, "A2:L2", []excelize.AutoFilterOptions{}); err != nil {
+		log.Fatal("Error", err.Error())
+	}
+
+	// tambahkan data ke sheet
+	rowIndex := 3
+	for tableName, tableData := range data {
+		for _, rowData := range tableData.(map[string]interface{})["db_match"].([]interface{}) {
+			for colIndex, colValue := range rowData.(map[string]interface{}) {
+				colIndexConv, err := strconv.Atoi(colIndex)
+				if err != nil {
+					log.Println(err.Error())
+				}
+				colName, _ := excelize.ColumnNumberToName(colIndexConv + 1)
+				file.SetCellValue(sheetName, fmt.Sprintf("%s%d", colName, rowIndex), colValue)
+			}
+
+			// tambah table nama
+			file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), tableName)
+			rowIndex++
+		}
+	}
+
+	// set autofilter
+	if err := file.AutoFilter(sheetName, "A2:L2", []excelize.AutoFilterOptions{}); err != nil {
+		log.Fatal("Error", err.Error())
+	}
+
+	file.SetActiveSheet(0)
+
+	if err := file.SaveAs("./file1.xlsx"); err != nil {
+		log.Println(err.Error())
+	}
+
+	return nil
 }
