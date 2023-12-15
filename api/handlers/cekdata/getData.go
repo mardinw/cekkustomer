@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/api/models"
@@ -64,7 +65,9 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 					log.Println("concat customer not found")
 					continue
 				}
-				result, err := models.CheckData(db, tableName, concatCustomerValue)
+				concatCustomerToUppercase := strings.ToUpper(concatCustomerValue)
+
+				result, err := models.CheckData(db, tableName, concatCustomerToUppercase)
 				if err != nil {
 					ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 					return
