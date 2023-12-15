@@ -33,8 +33,8 @@ func Init() (*sql.DB, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(70)
-	db.SetMaxIdleConns(70)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
 	duration, err := time.ParseDuration("15m")
 	if err != nil {
 		return nil, err
