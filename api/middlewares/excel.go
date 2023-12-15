@@ -72,7 +72,7 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 	return result, err
 }
 
-func CreateExcel(jsonData string) error {
+func CreateExcel(jsonData, bucketExport, filePath string) error {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
 		return err
