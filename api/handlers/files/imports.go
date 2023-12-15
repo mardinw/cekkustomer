@@ -40,28 +40,23 @@ func ImportExcel(ctx *gin.Context) {
 	}
 
 	s3FilePath := filepath.Join(uploadFolder, fileName)
-	// check file exists
-	checkFile := aws.NewConnect().S3.CheckExists(ctx, bucketName, s3FilePath)
 
-	if !checkFile {
-		if err := aws.NewConnect().S3.UploadFile(bucketName, filePath, s3FilePath); err != nil {
-			log.Println("Failed to upload file to S3:", err.Error())
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := os.Remove(filePath); err != nil {
-			log.Println("Failed to remove uploaded file:", err.Error())
-		} else {
-			log.Println("File removed successfully:", filePath)
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "successfully upload",
-		})
-	} else {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "nama file telah ada"})
+	// upload file to s3
+	if err := aws.NewConnect().S3.UploadFile(bucketName, filePath, s3FilePath); err != nil {
+		log.Println("Failed to upload file to S3:", err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
+
+	if err := os.Remove(filePath); err != nil {
+		log.Println("Failed to remove uploaded file:", err.Error())
+	} else {
+		log.Println("File removed successfully:", filePath)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "successfully upload",
+	})
 
 }
 
