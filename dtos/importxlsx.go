@@ -1,7 +1,14 @@
 package dtos
 
 type ImportXlsx struct {
-	Agencies string `dynamodb:"agencies"`
-	Files    string `dynamodb:"files"`
-	Uploaded int64  `dynamodb:"uploaded"`
+	CardNumber     int64
+	FirstName      string
+	Collector      string
+	Agencies       string
+	Address3       string
+	Address4       string
+	ZipCode        string
+	ConcatCustomer string
+	Files          string
+	Created        int64
 }
