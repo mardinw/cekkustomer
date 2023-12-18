@@ -36,12 +36,12 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 
 		file := v1.Group("/files")
 		{
-			file.POST("/import", files.ImportExcel)
+			file.POST("/import", files.ImportExcel(db))
 			file.GET("/export/:foldername/:filename", files.ExportMatchExcel(db))
 			file.GET("/read/:foldername/:filename", files.ReadFile)
 			file.GET("/list/:folder", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
-			file.DELETE("/:foldername/:filename", files.DeleteFile)
+			file.DELETE("/:foldername/:filename", files.DeleteFile(db))
 		}
 	}
 

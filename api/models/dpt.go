@@ -90,24 +90,47 @@ func CheckData(db *sql.DB, tableName, concatCustomer string) ([]dtos.CheckDPT, e
 	return results, nil
 }
 
-func GetAll(db *sql.DB, tableName string) ([]dtos.DPT, error) {
+func (customer *ImportCustomerXls) GetAll(db *sql.DB, tableName, agenciesName, filePath string) ([]dtos.CheckDPT, error) {
+	//query := fmt.Sprintf(`
+	//select t1.card_number card_number,
+	//t1.first_name first_name,
+	//t1.collector collector,
+	//t1.agencies agencies,
+	//t1.home_address_3 address_3,
+	//t1.home_address_4 address_4,
+	//t1.home_zip_code zipcode,
+	//t2.kodepos AS kodepos,
+	//t2.nama nama,
+	//t2.kel AS kelurahan,
+	//t2.kec AS kecamatan from customer t1
+	//JOIN %s t2 ON t1.concat_customer = t2.concat
+	//`, pq.QuoteIdentifier(tableName))
+
 	query := fmt.Sprintf(`
-	select t1.card_number AS card_number,
-	t1.collector AS collector,
-	t1.first_name AS first_name,
-	t1.home_address_3 AS home_address_3,
-	t1.home_address_4 AS home_address_4,
-	t1.home_zip_code AS home_zip_code,
+	select t1.card_number card_number,
+	t1.first_name first_name,
+	t1.collector collector,
+	t1.agencies agencies,
+	t1.home_address_3 address_3,
+	t1.home_address_4 address_4,
+	t1.home_zip_code zipcode,
 	t2.kodepos AS kodepos,
-	t2.kel AS kel,
-	t2.kec AS kec from customer AS t1 
-	JOIN %s AS t2 ON t1.concat_customer = t2.concat
+	t2.nama nama,
+	t2.kel AS kelurahan,
+	t2.kec AS kecamatan from customer t1 
+	JOIN %s t2 ON t1.concat_customer = t2.concat
+	WHERE t1.files = $1 AND t1.agencies = $2
 	`, pq.QuoteIdentifier(tableName))
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, err
@@ -115,17 +138,19 @@ func GetAll(db *sql.DB, tableName string) ([]dtos.DPT, error) {
 
 	defer rows.Close()
 
-	var result []dtos.DPT
+	var result []dtos.CheckDPT
 	for rows.Next() {
-		var each = dtos.DPT{}
+		var each = dtos.CheckDPT{}
 		var err = rows.Scan(
 			&each.CardNumber,
-			&each.Collector,
 			&each.FirstName,
-			&each.HomeAddress3,
-			&each.HomeAddress4,
-			&each.HomeZipCode,
+			&each.Collector,
+			&each.Agencies,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
 			&each.Kodepos,
+			&each.Nama,
 			&each.Kecamatan,
 			&each.Kelurahan,
 		)
@@ -139,4 +164,66 @@ func GetAll(db *sql.DB, tableName string) ([]dtos.DPT, error) {
 	}
 
 	return result, nil
+}
+
+func (customer *ImportCustomerXls) InsertCustomer(db *sql.DB) error {
+	query := `
+	INSERT INTO customer(
+	card_number,
+	first_name,
+	collector,
+	agencies,
+	home_address_3,
+	home_address_4,
+	home_zip_code,
+	concat_customer,
+	files,
+	created)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	args := []interface{}{
+		customer.CardNumber,
+		customer.FirstName,
+		customer.Collector,
+		customer.Agencies,
+		customer.Address3,
+		customer.Address4,
+		customer.ZipCode,
+		customer.ConcatCustomer,
+		customer.Files,
+		customer.Created,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := db.ExecContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (customer *ImportCustomerXls) DeleteCustomer(db *sql.DB, filePath, agenciesName string) error {
+	query := `
+	DELETE FROM customer WHERE files = $1 AND agencies = $2
+	`
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := db.ExecContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
+	return nil
 }
