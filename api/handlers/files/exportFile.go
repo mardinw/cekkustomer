@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/api/models"
+	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +29,6 @@ func ExportMatchExcel(db *sql.DB) gin.HandlerFunc {
 		folderUser := ctx.Param("foldername")
 
 		agenciesName := "folder-user"
-		//bucketName := "importxclxit"
 
 		bucketExport := "exportxclxit"
 
@@ -42,24 +43,40 @@ func ExportMatchExcel(db *sql.DB) gin.HandlerFunc {
 				return
 			}
 
-			if len(result) > 0 {
-				results[tableName] = result
-			}
+			// convert the result to a map
+
+			resultMap := make(map[string]interface{})
+			resultMap[tableName] = result
+			results[tableName] = resultMap
 		}
 
 		if len(results) > 0 {
 			jsonData, err := json.Marshal(results)
 			if err != nil {
 				log.Println(err)
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
 
-			if err := middlewares.CreateExcel(string(jsonData), bucketExport, filePath); err != nil {
+			if err := middlewares.CreateExcel(string(jsonData), bucketExport, fileName, filePath); err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"message": "file successfully create"})
+		if err := aws.NewConnect().S3.DownloadFile(bucketExport, filePath, fileName); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer func() {
+			err := os.Remove(fileName)
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}()
+
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+
+		ctx.File(fileName)
 	}
 }
