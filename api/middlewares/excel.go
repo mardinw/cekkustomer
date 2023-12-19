@@ -12,15 +12,15 @@ import (
 
 type MapCustomer []map[string]interface{}
 
-func containsKey(keys []string, key string) bool {
-	for _, k := range keys {
-		if k == key {
-			return true
-		}
-	}
-
-	return false
-}
+// func containsKey(keys []string, key string) bool {
+// 	for _, k := range keys {
+// 		if k == key {
+// 			return true
+// 		}
+// 	}
+//
+// 	return false
+// }
 
 func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 	xlsx, err := excelize.OpenReader(fileName)
@@ -51,12 +51,33 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 
 	// mengecek table header
 	for _, key := range checkKeys {
-		if containsKey(keys, key) {
-			log.Println("pass")
-		} else {
+		switch key {
+		case "card_number":
+			continue
+		case "first_name":
+			continue
+		case "address_3":
+			continue
+		case "address_4":
+			continue
+		case "home_zip_code":
+			continue
+		case "collector":
+			continue
+		case "concat_customer":
+			continue
+		case "concat_customer (nama + tgl lahir)":
+			continue
+		default:
 			err = errors.New("key tidak ditemukan")
 			return nil, err
 		}
+		// if containsKey(keys, key) {
+		// 	log.Println("pass")
+		// } else {
+		// 	err = errors.New("key tidak ditemukan")
+		// 	return nil, err
+		// }
 	}
 
 	for _, row := range rows[1:] {
