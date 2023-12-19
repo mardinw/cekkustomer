@@ -46,7 +46,7 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 		"address_4",
 		"home_zip_code",
 		"collector",
-		"concat_customer",
+		"concat_customer (nama + tgl lahir)",
 	}
 
 	// mengecek table header
