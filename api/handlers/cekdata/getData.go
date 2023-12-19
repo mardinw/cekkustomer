@@ -39,25 +39,10 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		fileName := ctx.Param("filename")
 		folderUser := ctx.Param("foldername")
 
-		//bucketName := "importxclxit"
-
 		filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
 
 		agenciesName := "folder-user"
-		// getFile, err := aws.NewConnect().S3.GetFile(bucketName, filePath)
-		// if err != nil {
-		// 	log.Println(err.Error())
-		// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// 	return
-		// }
 
-		// readFile, err := middlewares.ReadExcel(getFile.Body)
-		// if err != nil {
-		// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		// 	return
-		// }
-
-		//
 		for _, tableName := range getKec {
 			result, err := cekMatch.GetAll(db, tableName, agenciesName, filePath)
 			if err != nil {
@@ -68,25 +53,6 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 			if len(result) > 0 {
 				results[tableName] = result
 			}
-			// for _, data := range readFile {
-			// 	concatCustomerValue, ok := data["concat_customer"].(string)
-			// 	if !ok {
-			// 		log.Println("concat customer not found")
-			// 		continue
-			// 	}
-			// 	concatCustomerToUppercase := strings.ToUpper(concatCustomerValue)
-
-			// 	result, err := models.CheckData(db, tableName, concatCustomerToUppercase)
-			// 	if err != nil {
-			// 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-			// 		return
-			// 	}
-
-			// 	if len(result) > 0 {
-			// 		data["db_match"] = result
-			// 		results[tableName] = data
-			// 	}
-			// }
 		}
 
 		ctx.IndentedJSON(http.StatusOK, gin.H{

@@ -1,32 +1,30 @@
 package files
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
-	"cekkustomer.com/api/middlewares"
-	"cekkustomer.com/pkg/aws"
+	"cekkustomer.com/api/models"
 	"github.com/gin-gonic/gin"
 )
 
-func ReadFile(ctx *gin.Context) {
-	bucketName := "importxclxit"
-	fileName := ctx.Param("filename")
-	folderUser := ctx.Param("foldername")
+func ReadFile(db *sql.DB) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		//bucketName := "importxclxit"
+		fileName := ctx.Param("filename")
+		folderUser := ctx.Param("foldername")
 
-	filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
+		filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
+		agenciesName := "folder-user"
+		var dataPreview models.ImportCustomerXls
 
-	getFile, err := aws.NewConnect().S3.GetFile(bucketName, filePath)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+		result, err := dataPreview.GetCustomer(db, filePath, agenciesName)
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, result)
 	}
-
-	readFile, err := middlewares.ReadExcel(getFile.Body)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, readFile)
 }

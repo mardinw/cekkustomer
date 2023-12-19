@@ -86,7 +86,7 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 				continue
 			}
 
-			concatCustomerValue, ok := data["concat_customer"].(string)
+			concatCustomerValue, ok := data["concat_customer (nama + tgl lahir)"].(string)
 			if !ok {
 				log.Println("concat customer not found")
 				continue
