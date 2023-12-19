@@ -90,21 +90,57 @@ func CheckData(db *sql.DB, tableName, concatCustomer string) ([]dtos.CheckDPT, e
 	return results, nil
 }
 
+func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesName string) ([]dtos.DataPreview, error) {
+	query := `
+	SELECT distinct card_number,
+	first_name,
+	collector,
+	home_address_3 address_3,
+	home_address_4 address_4,
+	home_zip_code zipcode
+	FROM customer 
+	WHERE files = $1 AND agencies = $2
+	`
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dtos.DataPreview
+	for rows.Next() {
+		var each = dtos.DataPreview{}
+		var err = rows.Scan(
+			&each.CardNumber,
+			&each.FirstName,
+			&each.Collector,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
+		)
+		if err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+
+		result = append(result, each)
+	}
+
+	return result, nil
+
+}
+
 func (customer *ImportCustomerXls) GetAll(db *sql.DB, tableName, agenciesName, filePath string) ([]dtos.CheckDPT, error) {
-	//query := fmt.Sprintf(`
-	//select t1.card_number card_number,
-	//t1.first_name first_name,
-	//t1.collector collector,
-	//t1.agencies agencies,
-	//t1.home_address_3 address_3,
-	//t1.home_address_4 address_4,
-	//t1.home_zip_code zipcode,
-	//t2.kodepos AS kodepos,
-	//t2.nama nama,
-	//t2.kel AS kelurahan,
-	//t2.kec AS kecamatan from customer t1
-	//JOIN %s t2 ON t1.concat_customer = t2.concat
-	//`, pq.QuoteIdentifier(tableName))
 
 	query := fmt.Sprintf(`
 	select distinct on(t1.card_number) card_number,
