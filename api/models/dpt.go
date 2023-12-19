@@ -43,53 +43,6 @@ func GetAllKec(db *sql.DB) ([]string, error) {
 	return result, nil
 }
 
-func CheckData(db *sql.DB, tableName, concatCustomer string) ([]dtos.CheckDPT, error) {
-	query := `
-	select 
-	COALESCE(nama,''),
-	COALESCE(kodepos,''),
-	COALESCE(kec,''),
-	COALESCE(kel,'')
-	from ` + tableName + `
-	WHERE concat = $1
-	`
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	args := []interface{}{
-		concatCustomer,
-	}
-
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		log.Println(err.Error())
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var results []dtos.CheckDPT
-	for rows.Next() {
-		var each = dtos.CheckDPT{}
-		var err = rows.Scan(
-			&each.Nama,
-			&each.Kodepos,
-			&each.Kecamatan,
-			&each.Kelurahan,
-		)
-		if err != nil {
-			log.Println("record not found")
-			return nil, err
-		}
-
-		results = append(results, each)
-
-	}
-
-	return results, nil
-}
-
 func (customer *ImportCustomerXls) CompareCustomer(db *sql.DB, filePath, agenciesName, concatCustomer string) (bool, error) {
 	query := `
 	select card_number from customer
@@ -127,20 +80,6 @@ func (customer *ImportCustomerXls) CompareCustomer(db *sql.DB, filePath, agencie
 	}
 
 	return exists, nil
-
-	//	rows, err := db.QueryContext(ctx, query, args...)
-	//	if err != nil {
-	//		log.Println(err.Error())
-	//		return false
-	//	}
-	//	defer rows.Close()
-	//
-	//	var resultFound bool
-	//
-	//	for rows.Next() {
-	//		resultFound = true
-	//	}
-
 }
 
 func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesName string) ([]dtos.DataPreview, error) {

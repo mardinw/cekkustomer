@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 
+	"cekkustomer.com/pkg/aws"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -93,7 +96,7 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 	return result, err
 }
 
-func CreateExcel(jsonData, bucketExport, filePath string) error {
+func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
 		return err
@@ -104,12 +107,12 @@ func CreateExcel(jsonData, bucketExport, filePath string) error {
 	file := excelize.NewFile()
 
 	sheetName := "Match Data"
-	headers := []string{"Card Number", "First Name", "Collector", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Nama", "Kelurahan", "Kecamatan", "Lokasi"}
+	headers := []string{"Card Number", "First Name", "Collector", "Agencies", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Kelurahan", "Kecamatan", "Nama"}
 	file.SetSheetName(file.GetSheetName(0), sheetName)
 	file.SetCellValue(sheetName, "A1", "Data Customer")
-	file.SetCellValue(sheetName, "G1", "Data Match")
-	file.MergeCell(sheetName, "A1", "F1")
-	file.MergeCell(sheetName, "G1", "K1")
+	file.SetCellValue(sheetName, "H1", "Data Match")
+	file.MergeCell(sheetName, "A1", "G1")
+	file.MergeCell(sheetName, "H1", "K1")
 
 	// Membuat table header untuk data
 	for colIndex, header := range headers {
@@ -119,51 +122,50 @@ func CreateExcel(jsonData, bucketExport, filePath string) error {
 
 	// tambahkan data ke sheet
 	rowIndex := 3
-	for tableName, tableData := range data {
-		// data customer
-		for colName, colValueCustomer := range tableData.(map[string]interface{}) {
-			switch colName {
-			case "card_number":
-				file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), colValueCustomer)
-			case "first_name":
-				file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), colValueCustomer)
-			case "collector":
-				file.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), colValueCustomer)
-			case "address_3":
-				file.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), colValueCustomer)
-			case "address_4":
-				file.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), colValueCustomer)
-			case "home_zip_code":
-				file.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), colValueCustomer)
-			default:
-				log.Println("Key tidak diketahui")
-			}
-
+	for _, tableDataArray := range data {
+		if tableDataArray == nil {
+			continue
 		}
-
-		// ambil data match
-		for _, rowData := range tableData.(map[string]interface{})["db_match"].([]interface{}) {
-			for colName, colValue := range rowData.(map[string]interface{}) {
-				switch colName {
-				case "kodepos":
-					file.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), colValue)
-				case "nama":
-					file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), colValue)
-				case "kelurahan":
-					file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), colValue)
-				case "kecamatan":
-					file.SetCellValue(sheetName, fmt.Sprintf("J%d", rowIndex), colValue)
-				default:
-					log.Println("Key tidak dikenali")
-				}
+		for _, tableData := range tableDataArray.(map[string]interface{}) {
+			if tableData == nil {
+				continue
 			}
+			// data customer
+			for _, colMapCustomer := range tableData.([]interface{}) {
+				for colName, colValueCustomer := range colMapCustomer.(map[string]interface{}) {
+					switch colName {
+					case "card_number":
+						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), colValueCustomer)
+					case "first_name":
+						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), colValueCustomer)
+					case "collector":
+						file.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), colValueCustomer)
+					case "agencies":
+						file.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), colValueCustomer)
+					case "address_3":
+						file.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), colValueCustomer)
+					case "address_4":
+						file.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), colValueCustomer)
+					case "home_zip_code":
+						file.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), colValueCustomer)
+					case "kodepos":
+						file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), colValueCustomer)
+					case "kelurahan":
+						file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), colValueCustomer)
+					case "kecamatan":
+						file.SetCellValue(sheetName, fmt.Sprintf("J%d", rowIndex), colValueCustomer)
+					case "nama":
+						file.SetCellValue(sheetName, fmt.Sprintf("K%d", rowIndex), colValueCustomer)
+					default:
+						log.Println("Key tidak diketahui")
+					}
 
-			// tambah lokasi
-			file.SetCellValue(sheetName, fmt.Sprintf("K%d", rowIndex), tableName)
-			rowIndex++
+				}
+				rowIndex++
+
+			}
 		}
 	}
-
 	// set autofilter
 	if err := file.AutoFilter(sheetName, "A2:K2", []excelize.AutoFilterOptions{}); err != nil {
 		log.Fatal("Error", err.Error())
@@ -171,9 +173,25 @@ func CreateExcel(jsonData, bucketExport, filePath string) error {
 
 	file.SetActiveSheet(0)
 
-	if err := file.SaveAs("./file1.xlsx"); err != nil {
+	// Save excel file
+	localUploadDir := "./uploads"
+	localFilePath := filepath.Join(localUploadDir, fileName)
+
+	if err := file.SaveAs(localFilePath); err != nil {
 		log.Println(err.Error())
 	}
 
+	// upload to s3
+	if err := aws.NewConnect().S3.UploadFile(bucketExport, localFilePath, filePath); err != nil {
+		log.Println("failed upload to s3:", err.Error())
+		return err
+	}
+
+	if err := os.Remove(localFilePath); err != nil {
+		log.Println("failed to remove uploaded file:", err.Error())
+		return err
+	} else {
+		log.Println("file removed successfully:", localFilePath)
+	}
 	return nil
 }
