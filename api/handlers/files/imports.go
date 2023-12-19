@@ -110,7 +110,7 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 				Agencies:       agenciesName,
 				Address3:       data["address_3"].(string),
 				Address4:       data["address_4"].(string),
-				ZipCode:        data["home_zip_code"].(string),
+				ZipCode:        data["zipcode"].(string),
 				ConcatCustomer: concatCustToUpper,
 				Files:          s3FilePath,
 				Created:        timeNow,
