@@ -16,6 +16,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func isAllowedExtension(fileName string, allowedExtension []string) bool {
+	for _, ext := range allowedExtension {
+		if strings.HasSuffix(fileName, ext) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func ImportExcel(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
@@ -74,7 +84,6 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		// end readfile
-
 		// start insert to table customer
 
 		for _, data := range readFile {
@@ -86,11 +95,12 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 				continue
 			}
 
-			concatCustomerValue, ok := data["concat_customer (nama + tgl lahir)"].(string)
+			concatCustomerValue, ok := data["concat_customer"].(string)
 			if !ok {
 				log.Println("concat customer not found")
-				continue
+				return
 			}
+
 			concatCustToUpper := strings.ToUpper(concatCustomerValue)
 
 			inputCustomer := &models.ImportCustomerXls{
@@ -105,25 +115,15 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 				Files:          s3FilePath,
 				Created:        timeNow,
 			}
+
 			if err := inputCustomer.InsertCustomer(db); err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
 				return
 			}
-		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "successfully insert",
-		})
-
-	}
-}
-
-func isAllowedExtension(fileName string, allowedExtension []string) bool {
-	for _, ext := range allowedExtension {
-		if strings.HasSuffix(fileName, ext) {
-			return true
+			ctx.JSON(http.StatusOK, gin.H{
+				"message": "successfully uploaded",
+			})
 		}
 	}
-
-	return false
 }

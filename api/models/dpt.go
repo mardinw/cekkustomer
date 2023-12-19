@@ -90,6 +90,59 @@ func CheckData(db *sql.DB, tableName, concatCustomer string) ([]dtos.CheckDPT, e
 	return results, nil
 }
 
+func (customer *ImportCustomerXls) CompareCustomer(db *sql.DB, filePath, agenciesName, concatCustomer string) (bool, error) {
+	query := `
+	select card_number from customer
+	where files = $1 and agencies = $2 and concat_customer = $3
+	`
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+		concatCustomer,
+	}
+
+	var exists bool
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println()
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var each = dtos.DataPreview{}
+		var err = rows.Scan(
+			&each.CardNumber,
+		)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return false, nil
+			}
+			log.Println(err.Error())
+			return false, err
+		}
+	}
+
+	return exists, nil
+
+	//	rows, err := db.QueryContext(ctx, query, args...)
+	//	if err != nil {
+	//		log.Println(err.Error())
+	//		return false
+	//	}
+	//	defer rows.Close()
+	//
+	//	var resultFound bool
+	//
+	//	for rows.Next() {
+	//		resultFound = true
+	//	}
+
+}
+
 func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesName string) ([]dtos.DataPreview, error) {
 	query := `
 	SELECT distinct card_number,
