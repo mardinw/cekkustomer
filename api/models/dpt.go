@@ -107,17 +107,17 @@ func (customer *ImportCustomerXls) GetAll(db *sql.DB, tableName, agenciesName, f
 	//`, pq.QuoteIdentifier(tableName))
 
 	query := fmt.Sprintf(`
-	select t1.card_number card_number,
+	select distinct on(t1.card_number) card_number,
 	t1.first_name first_name,
 	t1.collector collector,
 	t1.agencies agencies,
 	t1.home_address_3 address_3,
 	t1.home_address_4 address_4,
 	t1.home_zip_code zipcode,
-	t2.kodepos AS kodepos,
+	t2.kodepos kodepos,
 	t2.nama nama,
-	t2.kel AS kelurahan,
-	t2.kec AS kecamatan from customer t1 
+	t2.kel kelurahan,
+	t2.kec kecamatan from customer t1 
 	JOIN %s t2 ON t1.concat_customer = t2.concat
 	WHERE t1.files = $1 AND t1.agencies = $2
 	`, pq.QuoteIdentifier(tableName))
