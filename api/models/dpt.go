@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"cekkustomer.com/dtos"
@@ -130,6 +131,71 @@ func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesNam
 
 	return result, nil
 
+}
+
+func (customer *ImportCustomerXls) GetAllByName(db *sql.DB, tableName, agenciesName, firstName, filePath string) ([]dtos.CheckDPT, error) {
+
+	query := fmt.Sprintf(`
+	select distinct on(t1.card_number) card_number,
+	t1.first_name first_name,
+	t1.collector collector,
+	t1.agencies agencies,
+	t1.home_address_3 address_3,
+	t1.home_address_4 address_4,
+	t1.home_zip_code zipcode,
+	t2.kodepos kodepos,
+	t2.nama nama,
+	t2.kel kelurahan,
+	t2.kec kecamatan from customer t1 
+	JOIN %s t2 ON t1.concat_customer = t2.concat
+	WHERE t1.files = $1 AND t1.agencies = $2 AND t2.nama like $3`,
+		pq.QuoteIdentifier(tableName))
+
+	firstNameUpper := "%" + strings.ToUpper(firstName) + "%"
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+		firstNameUpper,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var result []dtos.CheckDPT
+	for rows.Next() {
+		var each = dtos.CheckDPT{}
+		var err = rows.Scan(
+			&each.CardNumber,
+			&each.FirstName,
+			&each.Collector,
+			&each.Agencies,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
+			&each.Kodepos,
+			&each.Nama,
+			&each.Kecamatan,
+			&each.Kelurahan,
+		)
+		if err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+
+		result = append(result, each)
+
+	}
+
+	return result, nil
 }
 
 func (customer *ImportCustomerXls) GetAll(db *sql.DB, tableName, agenciesName, filePath string) ([]dtos.CheckDPT, error) {

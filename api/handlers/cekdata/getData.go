@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"cekkustomer.com/api/models"
+	"cekkustomer.com/dtos"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,18 +34,24 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		results := make(map[string]interface{})
-
 		// readfile excel
 		fileName := ctx.Param("filename")
 		folderUser := ctx.Param("foldername")
-
 		filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
 
+		firstName := ctx.Query("nama")
 		agenciesName := "folder-user"
+		results := make(map[string]interface{})
 
 		for _, tableName := range getKec {
-			result, err := cekMatch.GetAll(db, tableName, agenciesName, filePath)
+			var err error
+			var result []dtos.CheckDPT
+
+			if firstName == "" {
+				result, err = cekMatch.GetAll(db, tableName, agenciesName, filePath)
+			} else {
+				result, err = cekMatch.GetAllByName(db, tableName, agenciesName, firstName, filePath)
+			}
 			if err != nil {
 				ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 				return
@@ -58,5 +65,6 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		ctx.IndentedJSON(http.StatusOK, gin.H{
 			"results": results,
 		})
+
 	}
 }
