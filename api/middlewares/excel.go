@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"cekkustomer.com/pkg/aws"
 	"github.com/xuri/excelize/v2"
@@ -75,12 +76,6 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 			err = errors.New("key tidak ditemukan")
 			return nil, err
 		}
-		// if containsKey(keys, key) {
-		// 	log.Println("pass")
-		// } else {
-		// 	err = errors.New("key tidak ditemukan")
-		// 	return nil, err
-		// }
 	}
 
 	for _, row := range rows[1:] {
@@ -135,7 +130,7 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 				for colName, colValueCustomer := range colMapCustomer.(map[string]interface{}) {
 					switch colName {
 					case "card_number":
-						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), colValueCustomer)
+						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
 					case "first_name":
 						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), colValueCustomer)
 					case "collector":
