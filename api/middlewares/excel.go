@@ -26,7 +26,7 @@ type MapCustomer []map[string]interface{}
 // 	return false
 // }
 
-func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
+func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustomer, error) {
 	xlsx, err := excelize.OpenReader(fileName)
 	if err != nil {
 		log.Println(err.Error())
@@ -39,6 +39,17 @@ func ReadExcel(fileName io.ReadCloser) (MapCustomer, error) {
 		log.Println(err.Error())
 	}
 
+	// cek baris
+	if len(rows) > 205 {
+		err := errors.New("oops baris lebih dari 200")
+		log.Println(err.Error())
+
+		if err := aws.NewConnect().S3.DeleteFile(bucketName, s3FilePath); err != nil {
+			log.Println("file not found")
+			return nil, err
+		}
+		return nil, err
+	}
 	// konversi data excel to json
 	var result MapCustomer
 	keys := rows[0]

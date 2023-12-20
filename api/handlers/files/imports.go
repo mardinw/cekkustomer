@@ -78,7 +78,7 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		readFile, err := middlewares.ReadExcel(getFile.Body)
+		readFile, err := middlewares.ReadExcel(getFile.Body, bucketName, s3FilePath)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
