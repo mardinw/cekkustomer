@@ -137,3 +137,162 @@ func (c *AwsCognito) SignOut(userName string) error {
 
 	return nil
 }
+
+func (c *AwsCognito) ResendConfirmationCode(email string) (string, error) {
+	input := &cognito.ResendConfirmationCodeInput{
+		ClientId: aws.String(c.cognitoClientId),
+		Username: aws.String(email),
+	}
+
+	secretHash := computeSecretHash(c.cognitoClientSecret, email, c.cognitoClientId)
+	input.SecretHash = aws.String(secretHash)
+
+	code, err := c.cognitoClient.ResendConfirmationCode(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return "", err
+	}
+
+	return *code.CodeDeliveryDetails.Destination, nil
+}
+
+func (c *AwsCognito) GetUsername(token string) (*cognito.GetUserOutput, error) {
+	input := &cognito.GetUserInput{
+		AccessToken: &token,
+	}
+	result, err := c.cognitoClient.GetUser(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (c *AwsCognito) UpdateUserAttributes(email, attribute, value string) error {
+	inputAttributes := []types.AttributeType{
+		{
+			Name:  aws.String(attribute),
+			Value: aws.String(value),
+		},
+	}
+
+	input := &cognito.AdminUpdateUserAttributesInput{
+		UserPoolId:     aws.String(c.cognitoPoolId),
+		Username:       aws.String(email),
+		UserAttributes: inputAttributes,
+	}
+
+	_, err := c.cognitoClient.AdminUpdateUserAttributes(context.TODO(), input)
+
+	return err
+}
+
+func (c *AwsCognito) ForgotPassword(email string) (string, error) {
+	input := &cognito.ForgotPasswordInput{
+		ClientId: aws.String(c.cognitoClientId),
+		Username: aws.String(email),
+	}
+
+	secretHash := computeSecretHash(c.cognitoClientSecret, email, c.cognitoClientId)
+	input.SecretHash = aws.String(secretHash)
+
+	result, err := c.cognitoClient.ForgotPassword(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return "", err
+	}
+
+	return *result.CodeDeliveryDetails.Destination, nil
+}
+
+func (c *AwsCognito) ResetPassword(email, password, code string) (*cognito.ConfirmForgotPasswordOutput, error) {
+	input := &cognito.ConfirmForgotPasswordInput{
+		ClientId:         aws.String(c.cognitoClientId),
+		Username:         aws.String(email),
+		Password:         aws.String(password),
+		ConfirmationCode: aws.String(code),
+	}
+
+	secretHash := computeSecretHash(c.cognitoClientSecret, email, c.cognitoClientId)
+	input.SecretHash = aws.String(secretHash)
+
+	result, err := c.cognitoClient.ConfirmForgotPassword(context.TODO(), input)
+	if err != nil {
+		if strings.Contains(err.Error(), "CodeMismatchException") {
+			err = errors.New("kode verifikasi tidak cocok, silahkan request kode konfirmasi kembali")
+		}
+
+		if strings.Contains(err.Error(), "LimitExceededException") {
+			err = errors.New("maksium pengulangan password hanya sampai 3x, silahkan coba lagi 1 jam berikutnya")
+		}
+
+		if strings.Contains(err.Error(), "ExpiredCodeException") {
+			err = errors.New("kode verifikasi gagal, silahkan request lupa password kembali")
+		}
+
+		if strings.Contains(err.Error(), "InvalidParameterException") {
+			err = errors.New("maaf, parameter tidak bisa dipakai, silahkan ubah parameternya")
+		}
+		return nil, err
+	}
+
+	return result, err
+}
+
+func (c *AwsCognito) AddUserToGroup(userName, groupName string) error {
+	input := &cognito.AdminAddUserToGroupInput{
+		UserPoolId: aws.String(c.cognitoPoolId),
+		Username:   aws.String(userName),
+		GroupName:  aws.String(groupName),
+	}
+
+	_, err := c.cognitoClient.AdminAddUserToGroup(context.TODO(), input)
+	if err != nil {
+		if strings.Contains(err.Error(), "ResourceNotFoundException") {
+			err = errors.New("group tidak ada")
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *AwsCognito) CheckUserInGroup(userName string) ([]string, error) {
+	input := &cognito.AdminListGroupsForUserInput{
+		Username:   aws.String(userName),
+		UserPoolId: aws.String(c.cognitoPoolId),
+	}
+
+	resp, err := c.cognitoClient.AdminListGroupsForUser(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	groupNames := make([]string, len(resp.Groups))
+	for i, group := range resp.Groups {
+		groupNames[i] = *group.GroupName
+	}
+
+	return groupNames, nil
+}
+
+func (c *AwsCognito) ListGroup() ([]string, error) {
+	input := &cognito.ListGroupsInput{
+		UserPoolId: aws.String(c.cognitoPoolId),
+	}
+
+	resp, err := c.cognitoClient.ListGroups(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	groupNames := make([]string, len(resp.Groups))
+	for i, group := range resp.Groups {
+		groupNames[i] = *group.GroupName
+	}
+	return groupNames, nil
+}
