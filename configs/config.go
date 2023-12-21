@@ -1,12 +1,13 @@
 package configs
 
 type AppConfiguration struct {
-	Mode     string `env:"GIN_MODE"`
-	Port     int    `env:"PORT"`
-	AppEnv   string `env:"APP_ENV"`
-	Version  string `env:"VERSION"`
-	Database DBConfig
-	AwsConf  AwsConfiguration
+	Mode          string `env:"GIN_MODE"`
+	Port          int    `env:"PORT"`
+	AppEnv        string `env:"APP_ENV"`
+	Version       string `env:"VERSION"`
+	Database      DBConfig
+	AwsConf       AwsConfiguration
+	CognitoConfig AwsCognitoConfig
 }
 
 type DBConfig struct {
@@ -19,9 +20,12 @@ type DBConfig struct {
 }
 
 type AwsConfiguration struct {
-	AwsProfile   string `env:"AWS_PROFILE"`
-	AwsRegion    string `env:"AWS_REGION"`
-	ClientId     string `env:"CLIENT_ID"`
-	ClientSecret string `env:"CLIENT_SECRET"`
-	UserPoolID   string `env:"USER_POOL_ID"`
+	AwsProfile string `env:"AWS_PROFILE"`
+	AwsRegion  string `env:"AWS_REGION"`
+}
+
+type AwsCognitoConfig struct {
+	CognitoClientId     string `env:"COGNITO_CLIENT_ID"`
+	CognitoClientSecret string `env:"COGNITO_CLIENT_SECRET"`
+	CognitoUserPoolID   string `env:"COGNITO_USER_POOL_ID"`
 }
