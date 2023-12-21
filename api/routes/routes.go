@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 
+	"cekkustomer.com/api/handlers/auth"
 	"cekkustomer.com/api/handlers/cekdata"
 	"cekkustomer.com/api/handlers/files"
 	"cekkustomer.com/configs"
@@ -42,6 +43,15 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 			file.GET("/list/:folder", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
 			file.DELETE("/:foldername/:filename", files.DeleteFile(db))
+		}
+		authentication := v1.Group("/auth")
+		{
+			authentication.POST("/register", auth.Register)
+			authentication.POST("/login", auth.Login)
+			authentication.POST("/forgot", auth.ForgotPassword)
+			authentication.POST("/reset", auth.ResetPassword)
+			authentication.POST("/confirm", auth.Confirmation)
+			authentication.POST("/resend", auth.ResendCode)
 		}
 	}
 

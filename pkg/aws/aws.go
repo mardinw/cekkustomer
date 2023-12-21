@@ -13,6 +13,7 @@ import (
 type AwsConnect struct {
 	S3       *AwsS3
 	DynamoDB *database.AwsDynamoDB
+	Cognito  *AwsCognito
 }
 
 func NewConnect() *AwsConnect {
@@ -38,5 +39,6 @@ func NewConnect() *AwsConnect {
 	return &AwsConnect{
 		S3:       NewS3Connect(&cfg),
 		DynamoDB: database.NewDynamoDBConnect(&cfg),
+		Cognito:  NewCognitoClient(&cfg, configs.CognitoConfig.CognitoClientId, configs.CognitoConfig.CognitoClientSecret, configs.CognitoConfig.CognitoUserPoolID),
 	}
 }
