@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
@@ -14,8 +15,14 @@ import (
 
 func Login(ctx *gin.Context) {
 	var loginData dtos.AuthData
-	var config configs.AwsS3Bucket
-	if err := envconfig.Process(ctx, &config); err != nil {
+	var bucketS3 configs.AwsS3Bucket
+	var tableDynamo configs.AwsDynTblConfig
+
+	if err := envconfig.Process(ctx, &bucketS3); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	if err := envconfig.Process(ctx, &tableDynamo); err != nil {
 		log.Fatal(err.Error())
 	}
 
@@ -37,18 +44,40 @@ func Login(ctx *gin.Context) {
 	}
 	folderName := fmt.Sprintf("%s/", *output.Username)
 
-	isExists, err := aws.NewConnect().S3.CheckFolderExistsInBucket(config.ImportS3, folderName)
+	isExists, err := aws.NewConnect().S3.CheckFolderExistsInBucket(bucketS3.ImportS3, folderName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	if !isExists {
-		if err := aws.NewConnect().S3.CreateFolderInBucket(config.ImportS3, folderName); err != nil {
+		if err := aws.NewConnect().S3.CreateFolderInBucket(bucketS3.ImportS3, folderName); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
+
+	// create time create session and expire
+	createdAt := time.Now().UnixMilli()
+	expireAt := time.Now().Add(time.Hour).UnixNano() / int64(time.Millisecond)
+
+	// save session
+	if err := aws.NewConnect().DynamoDB.SaveTTLSession(tableDynamo.TTLSes, *output.Username, *result.AccessToken, createdAt, expireAt); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	session := http.Cookie{
+		Name:     "access_token",
+		Value:    *result.AccessToken,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 1),
+	}
+
+	http.SetCookie(ctx.Writer, &session)
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "successfully login",
 	})

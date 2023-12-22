@@ -17,16 +17,23 @@ import (
 
 func NewRoutes(db *sql.DB) *gin.Engine {
 	var config configs.AppConfiguration
+	var ttlDynmo configs.AwsDynTblConfig
+
 	if err := envconfig.Process(context.Background(), &config); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	if err := envconfig.Process(context.Background(), &ttlDynmo); err != nil {
 		log.Fatal(err.Error())
 	}
 
 	router := gin.Default()
 
 	router.Use(cors.Default())
+
+	// router.Use(sessions.Sessions("newsession", ))
 	router.Use(gin.Logger())
 	router.HandleMethodNotAllowed = true
-
 	v1 := router.Group("/v1")
 	{
 		check := v1.Group("/check")

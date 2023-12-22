@@ -5,14 +5,13 @@ import (
 	"log"
 
 	"cekkustomer.com/configs"
-	"cekkustomer.com/pkg/database"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/sethvargo/go-envconfig"
 )
 
 type AwsConnect struct {
 	S3       *AwsS3
-	DynamoDB *database.AwsDynamoDB
+	DynamoDB *AwsDynamoDB
 	Cognito  *AwsCognito
 }
 
@@ -38,7 +37,7 @@ func NewConnect() *AwsConnect {
 
 	return &AwsConnect{
 		S3:       NewS3Connect(&cfg),
-		DynamoDB: database.NewDynamoDBConnect(&cfg),
+		DynamoDB: NewDynamoDBConnect(&cfg),
 		Cognito:  NewCognitoClient(&cfg, configs.CognitoConfig.CognitoClientId, configs.CognitoConfig.CognitoClientSecret, configs.CognitoConfig.CognitoUserPoolID),
 	}
 }
