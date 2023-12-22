@@ -157,8 +157,8 @@ func (c *AwsS3) ListBuckets(ctx *gin.Context) (*s3.ListBucketsOutput, error) {
 	return c.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 }
 
-func (c *AwsS3) CreateBucket(ctx *gin.Context, bucketName string) error {
-	_, err := c.client.CreateBucket(ctx, &s3.CreateBucketInput{
+func (c *AwsS3) CreateBucket(bucketName string) error {
+	_, err := c.client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 
@@ -169,8 +169,8 @@ func (c *AwsS3) CreateBucket(ctx *gin.Context, bucketName string) error {
 	return nil
 }
 
-func (c *AwsS3) BucketExists(ctx *gin.Context, bucketName string) (bool, error) {
-	_, err := c.client.HeadBucket(ctx, &s3.HeadBucketInput{
+func (c *AwsS3) BucketExists(bucketName string) (bool, error) {
+	_, err := c.client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 
@@ -205,4 +205,39 @@ func (c *AwsS3) DeleteFile(bucketName, objectKey string) error {
 	}
 
 	return err
+}
+
+func (c *AwsS3) CreateFolderInBucket(bucketName, folderName string) error {
+
+	input := &s3.PutObjectInput{
+		Bucket: &bucketName,
+		Key:    &folderName,
+		Body:   nil,
+	}
+
+	_, err := c.client.PutObject(context.TODO(), input)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *AwsS3) CheckFolderExistsInBucket(bucketName, folderName string) (bool, error) {
+	keys := int32(1)
+	resp, err := c.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket:  &bucketName,
+		Prefix:  &folderName,
+		MaxKeys: &keys,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if len(resp.Contents) > 0 && strings.HasPrefix(*resp.Contents[0].Key, folderName) {
+		return true, nil
+	}
+
+	return false, nil
+
 }

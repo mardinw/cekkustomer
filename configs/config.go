@@ -8,6 +8,8 @@ type AppConfiguration struct {
 	Database      DBConfig
 	AwsConf       AwsConfiguration
 	CognitoConfig AwsCognitoConfig
+	S3Bucket      AwsS3Bucket
+	DynamoConfig  AwsDynTblConfig
 }
 
 type DBConfig struct {
@@ -28,4 +30,13 @@ type AwsCognitoConfig struct {
 	CognitoClientId     string `env:"COGNITO_CLIENT_ID"`
 	CognitoClientSecret string `env:"COGNITO_CLIENT_SECRET"`
 	CognitoUserPoolID   string `env:"COGNITO_USER_POOL_ID"`
+}
+
+type AwsS3Bucket struct {
+	ImportS3 string `env:"IMPORT_S3"`
+	ExportS3 string `env:"EXPORT_S3"`
+}
+
+type AwsDynTblConfig struct {
+	TTLSes string `env:"TTLSES_DYM"`
 }
