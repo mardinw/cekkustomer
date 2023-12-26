@@ -44,17 +44,31 @@ func Login(ctx *gin.Context) {
 	}
 	folderName := fmt.Sprintf("%s/", *output.Username)
 
-	isExists, err := aws.NewConnect().S3.CheckFolderExistsInBucket(bucketS3.ImportS3, folderName)
+	isExistsImport, err := aws.NewConnect().S3.CheckFolderExistsInBucket(bucketS3.ImportS3, folderName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	if !isExists {
+	isExistsExport, err := aws.NewConnect().S3.CheckFolderExistsInBucket(bucketS3.ExportS3, folderName)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if !isExistsImport && !isExistsExport {
+		// create folder for import
 		if err := aws.NewConnect().S3.CreateFolderInBucket(bucketS3.ImportS3, folderName); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		// create folder for export
+		if err := aws.NewConnect().S3.CreateFolderInBucket(bucketS3.ExportS3, folderName); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
 	}
 
 	// create time create session and expire
@@ -67,7 +81,7 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	session := http.Cookie{
+	cookie := http.Cookie{
 		Name:     "access_token",
 		Value:    *result.AccessToken,
 		HttpOnly: true,
@@ -76,7 +90,7 @@ func Login(ctx *gin.Context) {
 		Expires:  time.Now().Add(time.Hour * 1),
 	}
 
-	http.SetCookie(ctx.Writer, &session)
+	http.SetCookie(ctx.Writer, &cookie)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "successfully login",

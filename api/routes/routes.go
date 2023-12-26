@@ -55,6 +55,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		{
 			authentication.POST("/register", auth.Register)
 			authentication.POST("/login", auth.Login)
+			authentication.GET("/logout", auth.Logout)
 			authentication.POST("/forgot", auth.ForgotPassword)
 			authentication.POST("/reset", auth.ResetPassword)
 			authentication.POST("/confirm", auth.Confirmation)
