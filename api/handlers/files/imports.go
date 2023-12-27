@@ -12,8 +12,11 @@ import (
 
 	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/api/models"
+	"cekkustomer.com/configs"
 	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
+	"github.com/sethvargo/go-envconfig"
+	"golang.org/x/net/context"
 )
 
 func isAllowedExtension(fileName string, allowedExtension []string) bool {
@@ -29,10 +32,27 @@ func isAllowedExtension(fileName string, allowedExtension []string) bool {
 func ImportExcel(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
+		var bucketFolder configs.AwsS3Bucket
+		if err := envconfig.Process(context.Background(), &bucketFolder); err != nil {
+			log.Fatal(err.Error())
+		}
+
+		uuid, exists := ctx.Get("uuid")
+		if !exists {
+			log.Println("uuid tidak ditemukan")
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			return
+		}
+
+		uuidStr, ok := uuid.(string)
+		if !ok {
+			log.Println("gagal konversi ke string")
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+
 		localUploadDir := "./uploads"
-		uploadFolder := "folder-user"
-		bucketName := "importxclxit"
-		agenciesName := "folder-user"
+		agenciesName := uuidStr
 
 		file, err := ctx.FormFile("file")
 		if err != nil {
@@ -56,10 +76,10 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		s3FilePath := filepath.Join(uploadFolder, fileName)
+		s3FilePath := filepath.Join(uuidStr, fileName)
 
 		// upload file to s3
-		if err := aws.NewConnect().S3.UploadFile(bucketName, filePath, s3FilePath); err != nil {
+		if err := aws.NewConnect().S3.UploadFile(bucketFolder.ImportS3, filePath, s3FilePath); err != nil {
 			log.Println("Failed to upload file to S3:", err.Error())
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -72,13 +92,13 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// read file from bucket
-		getFile, err := aws.NewConnect().S3.GetFile(bucketName, s3FilePath)
+		getFile, err := aws.NewConnect().S3.GetFile(bucketFolder.ImportS3, s3FilePath)
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
 
-		readFile, err := middlewares.ReadExcel(getFile.Body, bucketName, s3FilePath)
+		readFile, err := middlewares.ReadExcel(getFile.Body, bucketFolder.ImportS3, s3FilePath)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

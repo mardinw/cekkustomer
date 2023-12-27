@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	"cekkustomer.com/api/handlers/auth"
 	"cekkustomer.com/api/handlers/cekdata"
 	"cekkustomer.com/api/handlers/files"
+	"cekkustomer.com/api/middlewares"
 	"cekkustomer.com/configs"
 
 	"github.com/gin-contrib/cors"
@@ -29,28 +31,37 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 
 	router := gin.Default()
 
-	router.Use(cors.Default())
-
-	// router.Use(sessions.Sessions("newsession", ))
+	//router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
+		AllowHeaders:     []string{"Authorization", "Content-Type", "Cookie"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           1 * time.Hour,
+	}))
 	router.Use(gin.Logger())
 	router.HandleMethodNotAllowed = true
 	v1 := router.Group("/v1")
 	{
 		check := v1.Group("/check")
 		{
+			check.Use(middlewares.Auth)
 			check.GET("/locate", cekdata.GetKec(db))
-			check.GET("/look/:foldername/:filename", cekdata.CheckDPT(db))
+			check.GET("/match/:filename", cekdata.CheckDPT(db))
 		}
 
 		file := v1.Group("/files")
 		{
+			file.Use(middlewares.Auth)
 			file.POST("/import", files.ImportExcel(db))
-			file.GET("/export/:foldername/:filename", files.ExportMatchExcel(db))
-			file.GET("/read/:foldername/:filename", files.ReadFile(db))
-			file.GET("/list/:folder", files.GetListFolder)
+			file.GET("/export/:filename", files.ExportMatchExcel(db))
+			file.GET("/read/:filename", files.ReadFile(db))
+			file.GET("/list", files.GetListFolder)
 			file.GET("/download/:filename", files.DownloadSampleXlsx)
-			file.DELETE("/:foldername/:filename", files.DeleteFile(db))
+			file.DELETE("/:filename", files.DeleteFile(db))
 		}
+
 		authentication := v1.Group("/auth")
 		{
 			authentication.POST("/register", auth.Register)

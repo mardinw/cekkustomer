@@ -93,7 +93,7 @@ func Login(ctx *gin.Context) {
 	http.SetCookie(ctx.Writer, &cookie)
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "successfully login",
+		"access_token": *result.AccessToken,
 	})
 
 }

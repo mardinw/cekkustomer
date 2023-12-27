@@ -7,8 +7,11 @@ import (
 	"net/http"
 
 	"cekkustomer.com/api/models"
+	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
 	"github.com/gin-gonic/gin"
+	"github.com/sethvargo/go-envconfig"
+	"golang.org/x/net/context"
 )
 
 func GetKec(db *sql.DB) gin.HandlerFunc {
@@ -27,6 +30,24 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		var cekMatch models.ImportCustomerXls
+		var bucketFolder configs.AwsS3Bucket
+		if err := envconfig.Process(context.Background(), &bucketFolder); err != nil {
+			log.Fatal(err.Error())
+		}
+
+		uuid, exists := ctx.Get("uuid")
+		if !exists {
+			log.Println("uuid tidak ditemukan")
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			return
+		}
+
+		uuidStr, ok := uuid.(string)
+		if !ok {
+			log.Println("gagal konversi ke string")
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
 
 		getKec, err := models.GetAllKec(db)
 		if err != nil {
@@ -36,11 +57,11 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 
 		// readfile excel
 		fileName := ctx.Param("filename")
-		folderUser := ctx.Param("foldername")
-		filePath := fmt.Sprintf("%s/%s", folderUser, fileName)
+		filePath := fmt.Sprintf("%s/%s", uuidStr, fileName)
 
+		// cek nama di table dpt
 		firstName := ctx.Query("nama")
-		agenciesName := "folder-user"
+		agenciesName := uuidStr
 		results := make(map[string]interface{})
 
 		for _, tableName := range getKec {

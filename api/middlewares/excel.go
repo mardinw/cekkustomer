@@ -16,16 +16,6 @@ import (
 
 type MapCustomer []map[string]interface{}
 
-// func containsKey(keys []string, key string) bool {
-// 	for _, k := range keys {
-// 		if k == key {
-// 			return true
-// 		}
-// 	}
-//
-// 	return false
-// }
-
 func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustomer, error) {
 	xlsx, err := excelize.OpenReader(fileName)
 	if err != nil {

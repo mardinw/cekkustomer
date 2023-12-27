@@ -25,7 +25,7 @@ func Auth(ctx *gin.Context) {
 		return
 	}
 
-	splitted := strings.Split(authHeader, "")
+	splitted := strings.Split(authHeader, " ")
 	if len(splitted) != 2 || strings.ToLower(splitted[0]) != "bearer" {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
 		return
@@ -45,5 +45,6 @@ func Auth(ctx *gin.Context) {
 		return
 	}
 
+	ctx.Set("uuid", *output.Username)
 	ctx.Next()
 }

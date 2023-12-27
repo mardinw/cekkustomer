@@ -6,23 +6,29 @@ import (
 	"net/http"
 	"os"
 
+	"cekkustomer.com/configs"
 	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
+	"github.com/sethvargo/go-envconfig"
+	"golang.org/x/net/context"
 )
 
 func DownloadSampleXlsx(ctx *gin.Context) {
+	var bucketFolder configs.AwsS3Bucket
+	if err := envconfig.Process(context.Background(), &bucketFolder); err != nil {
+		log.Fatal(err.Error())
+	}
+
 	fileName := ctx.Param("filename")
 
 	s3FilePath := "sample/" + fileName
 
-	bucketName := "importxclxit"
-
-	if !aws.NewConnect().S3.CheckExists(ctx, bucketName, s3FilePath) {
+	if !aws.NewConnect().S3.CheckExists(ctx, bucketFolder.ImportS3, s3FilePath) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "file not found in s3."})
 		return
 	}
 
-	err := aws.NewConnect().S3.DownloadFile(bucketName, s3FilePath, fileName)
+	err := aws.NewConnect().S3.DownloadFile(bucketFolder.ImportS3, s3FilePath, fileName)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -40,10 +46,27 @@ func DownloadSampleXlsx(ctx *gin.Context) {
 }
 
 func GetListFolder(ctx *gin.Context) {
-	folder := ctx.Param("folder")
-	bucketName := "importxclxit"
 
-	objects, err := aws.NewConnect().S3.ListFile(bucketName, folder)
+	var bucketFolder configs.AwsS3Bucket
+	if err := envconfig.Process(context.Background(), &bucketFolder); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	uuid, exists := ctx.Get("uuid")
+	if !exists {
+		log.Println("uuid tidak ditemukan")
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	uuidStr, ok := uuid.(string)
+	if !ok {
+		log.Println("gagal konversi ke string")
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	objects, err := aws.NewConnect().S3.ListFile(bucketFolder.ImportS3, uuidStr)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Failed to list objects: %v", err.Error())})
 		return
