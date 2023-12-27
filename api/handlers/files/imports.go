@@ -109,10 +109,39 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 		for _, data := range readFile {
 			timeNow := time.Now().UnixMilli()
 
-			cardNumber, err := strconv.ParseInt(data["card_number"].(string), 10, 64)
-			if err != nil {
-				log.Println(err)
-				continue
+			// card number
+			cardNumberRaw, ok := data["card_number"]
+			var cardNumber int64
+
+			if !ok || cardNumberRaw == nil {
+				log.Println("card number not found or nil")
+				cardNumber = int64(0)
+			} else {
+				cardNumberStr, ok := cardNumberRaw.(string)
+				if !ok {
+					log.Println("card_number is not a string")
+					continue
+				}
+				cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
+				if err != nil {
+					log.Println("card_number not found or is nil")
+					cardNumber = int64(0)
+				}
+			}
+
+			// collector
+			collectorRaw, ok := data["collector"]
+			var collector string
+
+			if !ok || collectorRaw == nil {
+				log.Println("collector not found or nil")
+				collector = ""
+			} else {
+				collector, ok = collectorRaw.(string)
+				if !ok {
+					log.Println("collector is not a string")
+					continue
+				}
 			}
 
 			concatCustomerValue, ok := data["concat_customer"].(string)
@@ -126,7 +155,7 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 			inputCustomer := &models.ImportCustomerXls{
 				CardNumber:     cardNumber,
 				FirstName:      data["first_name"].(string),
-				Collector:      data["collector"].(string),
+				Collector:      collector,
 				Agencies:       agenciesName,
 				Address3:       data["address_3"].(string),
 				Address4:       data["address_4"].(string),

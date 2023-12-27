@@ -32,7 +32,6 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 	// cek baris
 	if len(rows) > 205 {
 		err := errors.New("oops baris lebih dari 200")
-		log.Println(err.Error())
 
 		if err := aws.NewConnect().S3.DeleteFile(bucketName, s3FilePath); err != nil {
 			log.Println("file not found")
@@ -49,7 +48,7 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 		"first_name",
 		"address_3",
 		"address_4",
-		"home_zip_code",
+		"zipcode",
 		"collector",
 		"concat_customer (nama + tgl lahir)",
 	}
@@ -65,7 +64,7 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 			continue
 		case "address_4":
 			continue
-		case "home_zip_code":
+		case "zipcode":
 			continue
 		case "collector":
 			continue
