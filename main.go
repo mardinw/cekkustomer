@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"runtime"
 
 	"cekkustomer.com/api/servers"
 	"cekkustomer.com/pkg/database"
@@ -10,6 +11,8 @@ import (
 )
 
 func main() {
+
+	runtime.GOMAXPROCS(2)
 
 	err := godotenv.Load()
 	if err != nil {

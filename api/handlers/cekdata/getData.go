@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"cekkustomer.com/api/models"
 	"cekkustomer.com/configs"
@@ -62,24 +63,47 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		// cek nama di table dpt
 		firstName := ctx.Query("nama")
 		agenciesName := uuidStr
-		results := make(map[string]interface{})
+		// results := make(map[string]interface{})
+
+		// buat buffered channelnya
+		resultChannel := make(chan map[string]interface{}, len(getKec))
+
+		var wg sync.WaitGroup
 
 		for _, tableName := range getKec {
-			var err error
-			var result []dtos.CheckDPT
+			wg.Add(1)
 
-			if firstName == "" {
-				result, err = cekMatch.GetAll(db, tableName, agenciesName, filePath)
-			} else {
-				result, err = cekMatch.GetAllByName(db, tableName, agenciesName, firstName, filePath)
-			}
-			if err != nil {
-				ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-				return
-			}
+			go func(tableName string) {
+				defer wg.Done()
 
-			if len(result) > 0 {
-				results[tableName] = result
+				var err error
+				var result []dtos.CheckDPT
+
+				if firstName == "" {
+					result, err = cekMatch.GetAll(db, tableName, agenciesName, filePath)
+				} else {
+					result, err = cekMatch.GetAllByName(db, tableName, agenciesName, firstName, filePath)
+				}
+				if err != nil {
+					ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+					return
+				}
+
+				if len(result) > 0 {
+					resultChannel <- map[string]interface{}{tableName: result}
+				}
+			}(tableName)
+		}
+
+		go func() {
+			wg.Wait()
+			close(resultChannel)
+		}()
+
+		results := make(map[string]interface{})
+		for res := range resultChannel {
+			for key, value := range res {
+				results[key] = value
 			}
 		}
 

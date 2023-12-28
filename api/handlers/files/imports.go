@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"cekkustomer.com/api/middlewares"
@@ -98,6 +99,8 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		dataChannel := make(chan map[string]interface{}, 10)
+
 		readFile, err := middlewares.ReadExcel(getFile.Body, bucketFolder.ImportS3, s3FilePath)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -106,73 +109,98 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 		// end readfile
 		// start insert to table customer
 
-		for _, data := range readFile {
-			timeNow := time.Now().UnixMilli()
-
-			// card number
-			cardNumberRaw, ok := data["card_number"]
-			var cardNumber int64
-
-			if !ok || cardNumberRaw == nil {
-				log.Println("card number not found or nil")
-				cardNumber = int64(0)
-			} else {
-				cardNumberStr, ok := cardNumberRaw.(string)
-				if !ok {
-					log.Println("card_number is not a string")
-					continue
-				}
-				cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
-				if err != nil {
-					log.Println("card_number not found or is nil")
-					cardNumber = int64(0)
-				}
+		// goroutine for import data concurrently
+		go func() {
+			for _, data := range readFile {
+				dataChannel <- data
 			}
 
-			// collector
-			collectorRaw, ok := data["collector"]
-			var collector string
+			close(dataChannel)
+		}()
 
-			if !ok || collectorRaw == nil {
-				log.Println("collector not found or nil")
-				collector = ""
-			} else {
-				collector, ok = collectorRaw.(string)
-				if !ok {
-					log.Println("collector is not a string")
-					continue
-				}
-			}
-
-			concatCustomerValue, ok := data["concat_customer"].(string)
-			if !ok {
-				log.Println("concat customer not found")
-				return
-			}
-
-			concatCustToUpper := strings.ToUpper(concatCustomerValue)
-
-			inputCustomer := &models.ImportCustomerXls{
-				CardNumber:     cardNumber,
-				FirstName:      data["first_name"].(string),
-				Collector:      collector,
-				Agencies:       agenciesName,
-				Address3:       data["address_3"].(string),
-				Address4:       data["address_4"].(string),
-				ZipCode:        data["zipcode"].(string),
-				ConcatCustomer: concatCustToUpper,
-				Files:          s3FilePath,
-				Created:        timeNow,
-			}
-
-			if err := inputCustomer.InsertCustomer(db); err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error})
-				return
-			}
-
-			ctx.JSON(http.StatusOK, gin.H{
-				"message": "successfully uploaded",
-			})
+		// Goroutines to process data concurrently
+		var wg sync.WaitGroup
+		for i := 0; i < 5; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				processData(db, agenciesName, s3FilePath, dataChannel)
+			}()
 		}
+
+		wg.Wait()
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "successfully uploaded",
+		})
+	}
+}
+
+func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan map[string]interface{}) {
+	for data := range dataChannel {
+		timeNow := time.Now().UnixMilli()
+
+		// card number
+		cardNumberRaw, ok := data["card_number"]
+		var cardNumber int64
+		var err error
+
+		if !ok || cardNumberRaw == nil {
+			log.Println("card number not found or nil")
+			cardNumber = int64(0)
+		} else {
+			cardNumberStr, ok := cardNumberRaw.(string)
+			if !ok {
+				log.Println("card_number is not a string")
+				continue
+			}
+			cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
+			if err != nil {
+				log.Println("card_number not found or is nil")
+				cardNumber = int64(0)
+			}
+		}
+
+		// collector
+		collectorRaw, ok := data["collector"]
+		var collector string
+
+		if !ok || collectorRaw == nil {
+			log.Println("collector not found or nil")
+			collector = ""
+		} else {
+			collector, ok = collectorRaw.(string)
+			if !ok {
+				log.Println("collector is not a string")
+				continue
+			}
+		}
+
+		concatCustomerValue, ok := data["concat_customer"].(string)
+		if !ok {
+			log.Println("concat customer not found")
+			return
+		}
+
+		concatCustToUpper := strings.ToUpper(concatCustomerValue)
+
+		inputCustomer := &models.ImportCustomerXls{
+			CardNumber:     cardNumber,
+			FirstName:      data["first_name"].(string),
+			Collector:      collector,
+			Agencies:       agenciesName,
+			Address3:       data["address_3"].(string),
+			Address4:       data["address_4"].(string),
+			ZipCode:        data["zipcode"].(string),
+			ConcatCustomer: concatCustToUpper,
+			Files:          s3FilePath,
+			Created:        timeNow,
+		}
+
+		if err := inputCustomer.InsertCustomer(db); err != nil {
+			log.Println("failed to insert customer:", err.Error())
+			return
+		}
+
 	}
 }
