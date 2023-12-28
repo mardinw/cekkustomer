@@ -162,7 +162,6 @@ func (c *AwsCognito) GetUsername(token string) (*cognito.GetUserOutput, error) {
 	}
 	result, err := c.cognitoClient.GetUser(context.TODO(), input)
 	if err != nil {
-		log.Println(err.Error())
 		return nil, err
 	}
 

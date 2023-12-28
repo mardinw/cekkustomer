@@ -34,7 +34,7 @@ func Auth(ctx *gin.Context) {
 	accessToken := splitted[1]
 	output, err := aws.NewConnect().Cognito.GetUsername(accessToken)
 	if err != nil {
-		log.Println(err.Error())
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 		return
 	}
 

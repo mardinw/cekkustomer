@@ -64,6 +64,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 
 		authentication := v1.Group("/auth")
 		{
+			authentication.GET("/check", middlewares.Auth)
 			authentication.POST("/register", auth.Register)
 			authentication.POST("/login", auth.Login)
 			authentication.GET("/logout", auth.Logout)
