@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
+	"cekkustomer.com/api/helpers"
 	"cekkustomer.com/api/models"
 	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
@@ -116,19 +118,44 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 }
 
 func GetAttributes(ctx *gin.Context) {
-	uuid, exists := ctx.Get("uuid")
-	if !exists {
-		log.Println("uuid tidak ditemukan")
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+	// uuid, exists := ctx.Get("uuid")
+	// if !exists {
+	// 	log.Println("uuid tidak ditemukan")
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+	// 	return
+	// }
+
+	// _, ok := uuid.(string)
+	// if !ok {
+	// 	log.Println("gagal konversi ke string")
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+	// 	return
+	// }
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	_, ok := uuid.(string)
-	if !ok {
-		log.Println("gagal konversi ke string")
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+	splitted := strings.Split(authHeader, " ")
+	if len(splitted) != 2 || strings.ToLower(splitted[0]) != "bearer" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
 		return
 	}
+
+	accessToken := splitted[1]
+	outputUser, err := aws.NewConnect().Cognito.GetUsername(accessToken)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	// check role
+	if err := helpers.CheckAccountAdmin(outputUser.Username); err != nil {
+		ctx.JSON(http.StatusForbidden, gin.H{"message": err.Error()})
+		return
+	}
+
 	userName := ctx.Param("user")
 
 	output, err := aws.NewConnect().Cognito.CheckUserAttributes(userName)
