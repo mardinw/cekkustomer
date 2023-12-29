@@ -10,6 +10,7 @@ import (
 	"cekkustomer.com/api/models"
 	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
+	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 	"golang.org/x/net/context"
@@ -112,4 +113,29 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		})
 
 	}
+}
+
+func GetAttributes(ctx *gin.Context) {
+	uuid, exists := ctx.Get("uuid")
+	if !exists {
+		log.Println("uuid tidak ditemukan")
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	_, ok := uuid.(string)
+	if !ok {
+		log.Println("gagal konversi ke string")
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+	userName := ctx.Param("user")
+
+	output, err := aws.NewConnect().Cognito.CheckUserAttributes(userName)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, output)
 }

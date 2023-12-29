@@ -187,6 +187,22 @@ func (c *AwsCognito) UpdateUserAttributes(email, attribute, value string) error 
 	return err
 }
 
+func (c *AwsCognito) CheckUserAttributes(email string) ([]types.AttributeType, error) {
+
+	input := &cognito.AdminGetUserInput{
+		Username:   aws.String(email),
+		UserPoolId: &c.cognitoPoolId,
+	}
+
+	output, err := c.cognitoClient.AdminGetUser(context.TODO(), input)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+
+	return output.UserAttributes, nil
+}
+
 func (c *AwsCognito) ForgotPassword(email string) (string, error) {
 	input := &cognito.ForgotPasswordInput{
 		ClientId: aws.String(c.cognitoClientId),

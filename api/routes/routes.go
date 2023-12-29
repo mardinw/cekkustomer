@@ -49,6 +49,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 			check.Use(middlewares.Auth)
 			check.GET("/locate", cekdata.GetKec(db))
 			check.GET("/match/:filename", cekdata.CheckDPT(db))
+			check.GET("/attribute/:user", cekdata.GetAttributes)
 		}
 
 		file := v1.Group("/files")

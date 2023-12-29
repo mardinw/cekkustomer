@@ -73,7 +73,7 @@ func ImportExcel(db *sql.DB) gin.HandlerFunc {
 		filePath := filepath.Join(localUploadDir, fileName)
 
 		if err := ctx.SaveUploadedFile(file, filePath); err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
