@@ -8,6 +8,7 @@ import (
 
 	"cekkustomer.com/api/models"
 	"cekkustomer.com/configs"
+	"cekkustomer.com/dtos"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 	"golang.org/x/net/context"
@@ -39,9 +40,18 @@ func ReadFile(db *sql.DB) gin.HandlerFunc {
 		filePath := fmt.Sprintf("%s/%s", uuidStr, fileName)
 		agenciesName := uuidStr
 
-		var dataPreview models.ImportCustomerXls
+		// search nama di table customer
+		firstName := ctx.Query("first_name")
 
-		result, err := dataPreview.GetCustomer(db, filePath, agenciesName)
+		var dataPreview models.ImportCustomerXls
+		var result []dtos.DataPreview
+		var err error
+
+		if firstName == "" {
+			result, err = dataPreview.GetCustomer(db, filePath, agenciesName)
+		} else {
+			result, err = dataPreview.GetCustomerByName(db, filePath, agenciesName, firstName)
+		}
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 			return

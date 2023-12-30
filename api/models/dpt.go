@@ -133,6 +133,56 @@ func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesNam
 
 }
 
+func (customer *ImportCustomerXls) GetCustomerByName(db *sql.DB, filePath, agenciesName, firstName string) ([]dtos.DataPreview, error) {
+	query := `
+	SELECT distinct card_number,
+	first_name,
+	collector,
+	home_address_3 address_3,
+	home_address_4 address_4,
+	home_zip_code zipcode
+	FROM customer 
+	WHERE files = $1 AND agencies = $2 AND first_name like $3
+	`
+
+	firstNameUpper := "%" + strings.ToUpper(firstName) + "%"
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+		firstNameUpper,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+	var result []dtos.DataPreview
+	for rows.Next() {
+		var each = dtos.DataPreview{}
+		if err := rows.Scan(
+			&each.CardNumber,
+			&each.FirstName,
+			&each.Collector,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
+		); err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+
+		result = append(result, each)
+	}
+
+	return result, nil
+}
+
 func (customer *ImportCustomerXls) GetAllByName(db *sql.DB, tableName, agenciesName, firstName, filePath string) ([]dtos.CheckDPT, error) {
 
 	query := fmt.Sprintf(`
