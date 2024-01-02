@@ -45,6 +45,7 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 
 	checkKeys := []string{
 		"card_number",
+		"nik",
 		"first_name",
 		"address_3",
 		"address_4",
@@ -57,6 +58,8 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 	for _, key := range checkKeys {
 		switch key {
 		case "card_number":
+			continue
+		case "nik":
 			continue
 		case "first_name":
 			continue
@@ -88,6 +91,7 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 		result = append(result, rowData)
 	}
 
+	log.Println(result)
 	return result, err
 }
 
@@ -102,12 +106,12 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 	file := excelize.NewFile()
 
 	sheetName := "Match Data"
-	headers := []string{"Card Number", "First Name", "Collector", "Agencies", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Kelurahan", "Kecamatan", "Nama"}
+	headers := []string{"Card Number", "NIK", "First Name", "Collector", "Agencies", "Address 3", "Address 4", "Zip Code", "Kode Pos", "Kelurahan", "Kecamatan", "Nama"}
 	file.SetSheetName(file.GetSheetName(0), sheetName)
 	file.SetCellValue(sheetName, "A1", "Data Customer")
-	file.SetCellValue(sheetName, "H1", "Data Match")
-	file.MergeCell(sheetName, "A1", "G1")
-	file.MergeCell(sheetName, "H1", "K1")
+	file.SetCellValue(sheetName, "I1", "Data Match")
+	file.MergeCell(sheetName, "A1", "H1")
+	file.MergeCell(sheetName, "I1", "L1")
 
 	// Membuat table header untuk data
 	for colIndex, header := range headers {
@@ -131,26 +135,28 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 					switch colName {
 					case "card_number":
 						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
+					case "nik":
+						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
 					case "first_name":
-						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), colValueCustomer)
-					case "collector":
 						file.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), colValueCustomer)
-					case "agencies":
+					case "collector":
 						file.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), colValueCustomer)
-					case "address_3":
+					case "agencies":
 						file.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), colValueCustomer)
-					case "address_4":
+					case "address_3":
 						file.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), colValueCustomer)
-					case "home_zip_code":
+					case "address_4":
 						file.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), colValueCustomer)
-					case "kodepos":
+					case "home_zip_code":
 						file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), colValueCustomer)
-					case "kelurahan":
+					case "kodepos":
 						file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), colValueCustomer)
-					case "kecamatan":
+					case "kelurahan":
 						file.SetCellValue(sheetName, fmt.Sprintf("J%d", rowIndex), colValueCustomer)
-					case "nama":
+					case "kecamatan":
 						file.SetCellValue(sheetName, fmt.Sprintf("K%d", rowIndex), colValueCustomer)
+					case "nama":
+						file.SetCellValue(sheetName, fmt.Sprintf("L%d", rowIndex), colValueCustomer)
 					default:
 						log.Println("Key tidak diketahui")
 					}

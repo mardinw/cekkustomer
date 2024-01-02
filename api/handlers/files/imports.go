@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -161,6 +162,36 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 			}
 		}
 
+		// nik number
+		nikNumberRaw, ok := data["nik"]
+		var nikNumber int64
+		// gunakan regex untuk compile
+		re := regexp.MustCompile("[0-9]+")
+
+		if !ok || nikNumberRaw == nil {
+			log.Println("nik tidak ada")
+
+		} else {
+			nikNumberStr, ok := nikNumberRaw.(string)
+			if !ok {
+				log.Println("nik number bukan string")
+				continue
+			}
+			// gunakan regex untuk compile
+			matches := re.FindAllString(nikNumberStr, -1)
+			// ambil angka
+			if len(matches) > 0 {
+				firstNumber := matches[0]
+				nikInt, err := strconv.Atoi(firstNumber)
+				if err != nil {
+					log.Println("Gagal konversi string ke angka", err)
+				} else {
+					nikNumber = int64(nikInt)
+				}
+			}
+			log.Println(nikNumber)
+		}
+
 		// collector
 		collectorRaw, ok := data["collector"]
 		var collector string
@@ -175,17 +206,18 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 				continue
 			}
 		}
-
+		// cek concat customer
 		concatCustomerValue, ok := data["concat_customer"].(string)
-		if !ok {
+		if !ok || concatCustomerValue == "" {
 			log.Println("concat customer not found")
-			return
+			concatCustomerValue = ""
 		}
 
 		concatCustToUpper := strings.ToUpper(concatCustomerValue)
 
 		inputCustomer := &models.ImportCustomerXls{
 			CardNumber:     cardNumber,
+			NIK:            nikNumber,
 			FirstName:      data["first_name"].(string),
 			Collector:      collector,
 			Agencies:       agenciesName,

@@ -83,9 +83,9 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 				var result []dtos.CheckDPT
 
 				if firstName == "" {
-					result, err = cekMatch.GetAll(db, tableName, agenciesName, filePath)
+					result, err = cekMatch.GetAllConcat(db, tableName, agenciesName, filePath)
 				} else {
-					result, err = cekMatch.GetAllByName(db, tableName, agenciesName, firstName, filePath)
+					result, err = cekMatch.GetAllConcatByName(db, tableName, agenciesName, firstName, filePath)
 				}
 				if err != nil {
 					ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
@@ -118,19 +118,7 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 }
 
 func GetAttributes(ctx *gin.Context) {
-	// uuid, exists := ctx.Get("uuid")
-	// if !exists {
-	// 	log.Println("uuid tidak ditemukan")
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-	// 	return
-	// }
 
-	// _, ok := uuid.(string)
-	// if !ok {
-	// 	log.Println("gagal konversi ke string")
-	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-	// 	return
-	// }
 	authHeader := ctx.GetHeader("Authorization")
 	if authHeader == "" {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})

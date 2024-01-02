@@ -44,45 +44,6 @@ func GetAllKec(db *sql.DB) ([]string, error) {
 	return result, nil
 }
 
-func (customer *ImportCustomerXls) CompareCustomer(db *sql.DB, filePath, agenciesName, concatCustomer string) (bool, error) {
-	query := `
-	select card_number from customer
-	where files = $1 and agencies = $2 and concat_customer = $3
-	`
-
-	args := []interface{}{
-		filePath,
-		agenciesName,
-		concatCustomer,
-	}
-
-	var exists bool
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
-		log.Println()
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var each = dtos.DataPreview{}
-		var err = rows.Scan(
-			&each.CardNumber,
-		)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return false, nil
-			}
-			log.Println(err.Error())
-			return false, err
-		}
-	}
-
-	return exists, nil
-}
-
 func (customer *ImportCustomerXls) GetCustomer(db *sql.DB, filePath, agenciesName string) ([]dtos.DataPreview, error) {
 	query := `
 	SELECT distinct card_number,
@@ -183,7 +144,7 @@ func (customer *ImportCustomerXls) GetCustomerByName(db *sql.DB, filePath, agenc
 	return result, nil
 }
 
-func (customer *ImportCustomerXls) GetAllByName(db *sql.DB, tableName, agenciesName, firstName, filePath string) ([]dtos.CheckDPT, error) {
+func (customer *ImportCustomerXls) GetAllConcatByName(db *sql.DB, tableName, agenciesName, firstName, filePath string) ([]dtos.CheckDPT, error) {
 
 	query := fmt.Sprintf(`
 	select distinct on(t1.card_number) card_number,
@@ -248,7 +209,7 @@ func (customer *ImportCustomerXls) GetAllByName(db *sql.DB, tableName, agenciesN
 	return result, nil
 }
 
-func (customer *ImportCustomerXls) GetAll(db *sql.DB, tableName, agenciesName, filePath string) ([]dtos.CheckDPT, error) {
+func (customer *ImportCustomerXls) GetAllConcat(db *sql.DB, tableName, agenciesName, filePath string) ([]dtos.CheckDPT, error) {
 
 	query := fmt.Sprintf(`
 	select distinct on(t1.card_number) card_number,
@@ -314,6 +275,7 @@ func (customer *ImportCustomerXls) InsertCustomer(db *sql.DB) error {
 	query := `
 	INSERT INTO customer(
 	card_number,
+	nik,
 	first_name,
 	collector,
 	agencies,
@@ -323,11 +285,12 @@ func (customer *ImportCustomerXls) InsertCustomer(db *sql.DB) error {
 	concat_customer,
 	files,
 	created)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	args := []interface{}{
 		customer.CardNumber,
+		customer.NIK,
 		customer.FirstName,
 		customer.Collector,
 		customer.Agencies,
@@ -370,4 +333,108 @@ func (customer *ImportCustomerXls) DeleteCustomer(db *sql.DB, filePath, agencies
 	}
 
 	return nil
+}
+
+func (customer *ImportCustomerXls) GetCustomerNIK(db *sql.DB, filePath, agenciesName string) ([]dtos.DataPreviewNIK, error) {
+	query := `
+	SELECT distinct card_number,
+	nik,
+	first_name,
+	collector,
+	home_address_3 address_3,
+	home_address_4 address_4,
+	home_zip_code zipcode,
+	FROM customer
+	WHERE files = $1 AND agencies = $2
+	`
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dtos.DataPreviewNIK
+	for rows.Next() {
+		var each = dtos.DataPreviewNIK{}
+		if err := rows.Scan(
+			&each.CardNumber,
+			&each.NIK,
+			&each.FirstName,
+			&each.Collector,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
+		); err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+
+		result = append(result, each)
+	}
+
+	return result, nil
+}
+
+func (customer *ImportCustomerXls) GetCustomerNIKByName(db *sql.DB, agenciesName, firstName, filePath string) ([]dtos.DataPreviewNIK, error) {
+	query := `
+	SELECT distinct card_number,
+	nik,
+	first_name,
+	collector,
+	home_address_3 address_3,
+	home_address_4 address_4,
+	home_zip_code zipcode,
+	from customer
+	WHERE files = $1 AND agencies = $2 AND first_name like $3
+	`
+
+	firstNameUpper := "%" + strings.ToUpper(firstName) + "%"
+
+	args := []interface{}{
+		filePath,
+		agenciesName,
+		firstNameUpper,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dtos.DataPreviewNIK
+	for rows.Next() {
+		var each = dtos.DataPreviewNIK{}
+		if err := rows.Scan(
+			&each.CardNumber,
+			&each.NIK,
+			&each.FirstName,
+			&each.Collector,
+			&each.Address3,
+			&each.Address4,
+			&each.ZipCode,
+		); err != nil {
+			log.Println("record not found")
+			return nil, err
+		}
+
+		result = append(result, each)
+	}
+
+	return result, nil
 }
