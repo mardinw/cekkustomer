@@ -1,18 +1,8 @@
 package dtos
 
-type DataPreview struct {
-	CardNumber int64  `json:"card_number"`
-	FirstName  string `json:"first_name"`
-	Collector  string `json:"collector"`
-	Agencies   string `json:"agencies,omitempty"`
-	Address3   string `json:"address_3"`
-	Address4   string `json:"address_4"`
-	ZipCode    string `json:"home_zip_code"`
-}
-
 type DataPreviewNIK struct {
-	CardNumber string `json:"card_number"`
-	NIK        string `json:"nik"`
+	CardNumber int64  `json:"card_number"`
+	NIK        int64  `json:"nik"`
 	FirstName  string `json:"first_name"`
 	Collector  string `json:"collector"`
 	Agencies   string `json:"agencies,omitempty"`
@@ -23,6 +13,7 @@ type DataPreviewNIK struct {
 
 type CheckDPT struct {
 	CardNumber     int64  `json:"card_number"`
+	NIK            string `json:"nik"`
 	FirstName      string `json:"first_name"`
 	Collector      string `json:"collector"`
 	Agencies       string `json:"agencies"`

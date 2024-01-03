@@ -5,39 +5,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 
-	"cekkustomer.com/api/helpers"
 	"cekkustomer.com/api/models"
-	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
-	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
-	"github.com/sethvargo/go-envconfig"
-	"golang.org/x/net/context"
 )
 
-func GetKec(db *sql.DB) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		result, err := models.GetAllKec(db)
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{"locate": result})
-	}
-}
-
-func CheckDPT(db *sql.DB) gin.HandlerFunc {
+func CheckDPTByConcat(db *sql.DB) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		var cekMatch models.ImportCustomerXls
-		var bucketFolder configs.AwsS3Bucket
-		if err := envconfig.Process(context.Background(), &bucketFolder); err != nil {
-			log.Fatal(err.Error())
-		}
 
 		uuid, exists := ctx.Get("uuid")
 		if !exists {
@@ -115,42 +93,4 @@ func CheckDPT(db *sql.DB) gin.HandlerFunc {
 		})
 
 	}
-}
-
-func GetAttributes(ctx *gin.Context) {
-
-	authHeader := ctx.GetHeader("Authorization")
-	if authHeader == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	splitted := strings.Split(authHeader, " ")
-	if len(splitted) != 2 || strings.ToLower(splitted[0]) != "bearer" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-		return
-	}
-
-	accessToken := splitted[1]
-	outputUser, err := aws.NewConnect().Cognito.GetUsername(accessToken)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-		return
-	}
-
-	// check role
-	if err := helpers.CheckAccountAdmin(outputUser.Username); err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"message": err.Error()})
-		return
-	}
-
-	userName := ctx.Param("user")
-
-	output, err := aws.NewConnect().Cognito.CheckUserAttributes(userName)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	ctx.JSON(http.StatusOK, output)
 }

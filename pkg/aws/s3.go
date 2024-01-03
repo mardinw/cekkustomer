@@ -146,8 +146,6 @@ func (c *AwsS3) CheckExists(ctx *gin.Context, bucketName, fileName string) bool 
 					"Here's what happened: %v\n", bucketName, err)
 			}
 		}
-	} else {
-		log.Printf("File %v exists and you already own it.", fileName)
 	}
 
 	return exists

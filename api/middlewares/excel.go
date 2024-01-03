@@ -91,7 +91,6 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 		result = append(result, rowData)
 	}
 
-	log.Println(result)
 	return result, err
 }
 

@@ -9,6 +9,7 @@ import (
 	"cekkustomer.com/api/models"
 	"cekkustomer.com/configs"
 	"cekkustomer.com/dtos"
+	"cekkustomer.com/pkg/aws"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 	"golang.org/x/net/context"
@@ -44,18 +45,37 @@ func ReadFile(db *sql.DB) gin.HandlerFunc {
 		firstName := ctx.Query("first_name")
 
 		var dataPreview models.ImportCustomerXls
-		var result []dtos.DataPreview
+		var result []dtos.DataPreviewNIK
 		var err error
 
-		if firstName == "" {
-			result, err = dataPreview.GetCustomer(db, filePath, agenciesName)
-		} else {
-			result, err = dataPreview.GetCustomerByName(db, filePath, agenciesName, firstName)
-		}
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		if !aws.NewConnect().S3.CheckExists(ctx, bucketFolder.ImportS3, filePath) {
+			ctx.JSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("file %s not found", filePath)})
 			return
 		}
+		if firstName == "" {
+			result, _ = dataPreview.GetCustomer(db, filePath, agenciesName)
+		} else {
+			result, err = dataPreview.GetCustomerByName(db, agenciesName, firstName, filePath)
+			if err != nil {
+				ctx.JSON(http.StatusNotFound, gin.H{"message": "data not found"})
+				return
+			}
+		}
+
+		if len(result) == 0 {
+			ctx.JSON(http.StatusNotFound, gin.H{"message": "data not found"})
+			return
+		}
+
+		// var nikList []string
+		// for _, preview := range result {
+		// 	nikList = append(nikList, preview.NIK)
+		// }
+
+		// nikLengths := make(map[string]int)
+		// for _, nik := range nikList {
+		// 	nikLengths[nik] = len(nik)
+		// }
 
 		// read file from bucket
 		ctx.JSON(http.StatusOK, result)
