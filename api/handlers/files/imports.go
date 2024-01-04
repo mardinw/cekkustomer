@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -142,54 +141,71 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 		timeNow := time.Now().UnixMilli()
 
 		// card number
-		cardNumberRaw, ok := data["card_number"]
-		var cardNumber int64
-		var err error
-
-		if !ok || cardNumberRaw == nil {
-			log.Println("card number not found or nil")
-			cardNumber = int64(0)
-		} else {
-			cardNumberStr, ok := cardNumberRaw.(string)
-			if !ok {
-				log.Println("card_number is not a string")
-				continue
-			}
-			cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
-			if err != nil {
-				log.Println("card_number not found or is nil")
-				cardNumber = int64(0)
-			}
+		cardNumber, ok := data["card_number"].(string)
+		if !ok || cardNumber == "" {
+			log.Println("card number not found")
+			cardNumber = ""
 		}
 
+		// var cardNumber int64
+		// var err error
+
+		// if !ok || cardNumberRaw == nil {
+		// 	log.Println("card number not found or nil")
+		// 	cardNumber = int64(0)
+		// } else {
+		// 	cardNumberStr, ok := cardNumberRaw.(string)
+		// 	if !ok {
+		// 		log.Println("card_number is not a string")
+		// 		continue
+		// 	}
+		// 	cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
+		// 	if err != nil {
+		// 		log.Println("card_number not found or is nil")
+		// 		cardNumber = int64(0)
+		// 	}
+		// }
+
 		// nik number
-		nikNumberRaw, ok := data["nik"]
-		var nikNumber int64
+		nikNumberRaw, ok := data["nik"].(string)
+		var nikNumber string
+		var nikHidden string
 		// gunakan regex untuk compile
 		re := regexp.MustCompile("[0-9]+")
 
-		if !ok || nikNumberRaw == nil {
+		if !ok || nikNumberRaw == "" {
 			log.Println("nik tidak ada")
-
+			nikNumber = ""
 		} else {
-			nikNumberStr, ok := nikNumberRaw.(string)
-			if !ok {
-				log.Println("nik number bukan string")
-				continue
-			}
+			// nikNumberStr, ok := nikNumberRaw.(string)
+			// if !ok {
+			// 	log.Println("nik number bukan string")
+			// 	continue
+			// }
 			// gunakan regex untuk compile
-			matches := re.FindAllString(nikNumberStr, -1)
+			matches := re.FindAllString(nikNumberRaw, -1)
 			// ambil angka
 			if len(matches) > 0 {
-				firstNumber := matches[0]
-				nikInt, err := strconv.Atoi(firstNumber)
-				if err != nil {
-					log.Println("Gagal konversi string ke angka", err)
-				} else {
-					nikNumber = int64(nikInt)
+				nikNumberMatch := matches[0]
+
+				// cek length
+				if len(nikNumberMatch) > 4 {
+					// ambil substring dari string
+					hiddenPart := strings.Repeat("*", 4)
+					visiblePart := nikNumberMatch[:len(nikNumberMatch)-4]
+
+					// Gabungkan bagian yang terlihat dan tersembunyi
+					nikHidden = visiblePart + hiddenPart
+					log.Println(nikHidden)
 				}
+				nikNumber = nikNumberMatch
+				// nikInt, err := strconv.Atoi(nikNumberMatch)
+				// if err != nil {
+				// 	log.Println("Gagal konversi string ke angka", err)
+				// } else {
+				// 	nikNumber = int64(nikInt
+				// }
 			}
-			log.Println(nikNumber)
 		}
 
 		// collector
@@ -218,6 +234,7 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 		inputCustomer := &models.ImportCustomerXls{
 			CardNumber:     cardNumber,
 			NIK:            nikNumber,
+			NIKCheck:       nikHidden,
 			FirstName:      data["first_name"].(string),
 			Collector:      collector,
 			Agencies:       agenciesName,

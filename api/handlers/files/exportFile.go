@@ -55,7 +55,7 @@ func ExportMatchExcel(db *sql.DB) gin.HandlerFunc {
 		results := make(map[string]interface{})
 		// get query di match
 		for _, tableName := range getKec {
-			result, err := cekMatch.GetAllConcat(db, tableName, agenciesName, filePath)
+			result, err := cekMatch.GetMatchConcat(db, tableName, agenciesName, filePath)
 			if err != nil {
 				ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 				return

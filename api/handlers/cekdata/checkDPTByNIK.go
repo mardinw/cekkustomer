@@ -58,12 +58,12 @@ func CheckDPTByNIK(db *sql.DB) gin.HandlerFunc {
 				defer wg.Done()
 
 				var err error
-				var result []dtos.CheckDPT
+				var result []dtos.CheckDPTNIK
 
 				if firstName == "" {
-					result, err = cekMatch.GetAllConcat(db, tableName, agenciesName, filePath)
+					result, err = cekMatch.GetMatchNik(db, tableName, agenciesName, filePath)
 				} else {
-					result, err = cekMatch.GetAllConcatByName(db, tableName, agenciesName, firstName, filePath)
+					result, err = cekMatch.GetMatchNikByName(db, tableName, agenciesName, firstName, filePath)
 				}
 				if err != nil {
 					ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})

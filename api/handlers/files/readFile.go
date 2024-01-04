@@ -67,16 +67,6 @@ func ReadFile(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// var nikList []string
-		// for _, preview := range result {
-		// 	nikList = append(nikList, preview.NIK)
-		// }
-
-		// nikLengths := make(map[string]int)
-		// for _, nik := range nikList {
-		// 	nikLengths[nik] = len(nik)
-		// }
-
 		// read file from bucket
 		ctx.JSON(http.StatusOK, result)
 

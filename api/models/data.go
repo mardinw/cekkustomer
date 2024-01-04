@@ -1,8 +1,9 @@
 package models
 
 type ImportCustomerXls struct {
-	CardNumber     int64  `json:"card_number"`
-	NIK            int64  `json:"nik"`
+	CardNumber     string `json:"card_number"`
+	NIK            string `json:"nik"`
+	NIKCheck       string `json:"nik_check"`
 	FirstName      string `json:"first_name"`
 	Collector      string `json:"collector"`
 	Agencies       string `json:"agencies"`
