@@ -30,7 +30,7 @@ func ReadExcel(fileName io.ReadCloser, bucketName, s3FilePath string) (MapCustom
 	}
 
 	// cek baris
-	if len(rows) > 1000 {
+	if len(rows) > 205 {
 		err := errors.New("oops baris lebih dari 200")
 
 		if err := aws.NewConnect().S3.DeleteFile(bucketName, s3FilePath); err != nil {
