@@ -135,7 +135,7 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 					case "card_number":
 						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
 					case "nik":
-						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
+						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), fmt.Sprintf("`%s", colValueCustomer))
 					case "first_name":
 						file.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), colValueCustomer)
 					case "collector":
@@ -147,9 +147,9 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 					case "address_4":
 						file.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), colValueCustomer)
 					case "home_zip_code":
-						file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), colValueCustomer)
+						file.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), fmt.Sprintf("`%s", colValueCustomer))
 					case "kodepos":
-						file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), colValueCustomer)
+						file.SetCellValue(sheetName, fmt.Sprintf("I%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
 					case "kelurahan":
 						file.SetCellValue(sheetName, fmt.Sprintf("J%d", rowIndex), colValueCustomer)
 					case "kecamatan":
