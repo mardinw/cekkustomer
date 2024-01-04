@@ -133,7 +133,7 @@ func CreateExcel(jsonData, bucketExport, fileName, filePath string) error {
 				for colName, colValueCustomer := range colMapCustomer.(map[string]interface{}) {
 					switch colName {
 					case "card_number":
-						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("`%s", strconv.FormatFloat(colValueCustomer.(float64), 'f', -1, 64)))
+						file.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("`%s", colValueCustomer))
 					case "nik":
 						file.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), fmt.Sprintf("`%s", colValueCustomer))
 					case "first_name":
