@@ -141,48 +141,33 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 		timeNow := time.Now().UnixMilli()
 
 		// card number
-		cardNumber, ok := data["card_number"].(string)
-		if !ok || cardNumber == "" {
-			log.Println("card number not found")
+		cardNumberValue := data["card_number"]
+		var cardNumber string
+		if cardNumberValue != nil {
+			cardNumberStr, ok := data["card_number"].(string)
+			if !ok || cardNumber == "" {
+				log.Println("card number not found")
+				cardNumber = ""
+			}
+			cardNumber = cardNumberStr
+		} else {
 			cardNumber = ""
 		}
 
-		// var cardNumber int64
-		// var err error
-
-		// if !ok || cardNumberRaw == nil {
-		// 	log.Println("card number not found or nil")
-		// 	cardNumber = int64(0)
-		// } else {
-		// 	cardNumberStr, ok := cardNumberRaw.(string)
-		// 	if !ok {
-		// 		log.Println("card_number is not a string")
-		// 		continue
-		// 	}
-		// 	cardNumber, err = strconv.ParseInt(cardNumberStr, 10, 64)
-		// 	if err != nil {
-		// 		log.Println("card_number not found or is nil")
-		// 		cardNumber = int64(0)
-		// 	}
-		// }
-
 		// nik number
-		nikNumberRaw, ok := data["nik"].(string)
+		nikNumberValue := data["nik"]
 		var nikNumber string
 		var nikHidden string
 		// gunakan regex untuk compile
 		re := regexp.MustCompile("[0-9]+")
 
-		if !ok || nikNumberRaw == "" {
-			log.Println("nik tidak ada")
-			nikNumber = ""
-		} else {
-			// nikNumberStr, ok := nikNumberRaw.(string)
-			// if !ok {
-			// 	log.Println("nik number bukan string")
-			// 	continue
-			// }
-			// gunakan regex untuk compile
+		if nikNumberValue != nil {
+			nikNumberRaw, ok := data["nik"].(string)
+
+			if !ok || nikNumberRaw == "" {
+				log.Println("nik tidak ada")
+				nikNumber = ""
+			}
 			matches := re.FindAllString(nikNumberRaw, -1)
 			// ambil angka
 			if len(matches) > 0 {
@@ -199,48 +184,101 @@ func processData(db *sql.DB, agenciesName, s3FilePath string, dataChannel <-chan
 					log.Println(nikHidden)
 				}
 				nikNumber = nikNumberMatch
-				// nikInt, err := strconv.Atoi(nikNumberMatch)
-				// if err != nil {
-				// 	log.Println("Gagal konversi string ke angka", err)
-				// } else {
-				// 	nikNumber = int64(nikInt
-				// }
 			}
+
 		}
 
 		// collector
-		collectorRaw, ok := data["collector"]
+		collectorRaw := data["collector"]
 		var collector string
-
-		if !ok || collectorRaw == nil {
-			log.Println("collector not found or nil")
-			collector = ""
-		} else {
-			collector, ok = collectorRaw.(string)
+		if collectorRaw != nil {
+			collectorStr, ok := collectorRaw.(string)
 			if !ok {
 				log.Println("collector is not a string")
-				continue
+				collector = ""
 			}
-		}
-		// cek concat customer
-		concatCustomerValue, ok := data["concat_customer"].(string)
-		if !ok || concatCustomerValue == "" {
-			log.Println("concat customer not found")
-			concatCustomerValue = ""
+			collector = collectorStr
+		} else {
+			collector = ""
 		}
 
-		concatCustToUpper := strings.ToUpper(concatCustomerValue)
+		// cek concat customer
+		concatCustomer := data["concat_customer"]
+		var concatCustToUpper string
+
+		if concatCustomer != nil {
+			concatCustomerValue, ok := data["concat_customer"].(string)
+			if !ok || concatCustomerValue == "" {
+				log.Println("concat customer not found")
+				concatCustomerValue = ""
+			}
+			concatCustToUpper = strings.ToUpper(concatCustomerValue)
+		} else {
+			concatCustToUpper = ""
+		}
+
+		firstName := data["first_name"]
+		var firstNameValue string
+		if firstName != nil {
+			firstNameStr, ok := data["first_name"].(string)
+			if !ok || firstNameValue == "" {
+				log.Println("first name not found")
+				firstNameValue = ""
+			}
+			firstNameValue = firstNameStr
+		} else {
+			firstNameValue = ""
+		}
+
+		address3 := data["address_3"]
+		var address3Value string
+		if address3 != nil {
+			address3Str, ok := data["address_3"].(string)
+			if !ok || address3Value == "" {
+				log.Println("address 3 not found")
+				address3Value = ""
+			}
+			address3Value = address3Str
+		} else {
+			address3Value = ""
+		}
+
+		address4 := data["address_4"]
+		var address4Value string
+		if address4 != nil {
+			address4Str, ok := data["address_4"].(string)
+			if !ok || address4Value == "" {
+				log.Println("address 3 not found")
+				address4Value = ""
+			}
+			address4Value = address4Str
+		} else {
+			address4Value = ""
+		}
+
+		zipCode := data["zipcode"]
+		var zipCodeValue string
+		if zipCode != nil {
+			zipCodeStr, ok := data["zipcode"].(string)
+			if !ok || zipCodeValue == "" {
+				log.Println("zipcode not found")
+				zipCodeValue = ""
+			}
+			zipCodeValue = zipCodeStr
+		} else {
+			zipCodeValue = ""
+		}
 
 		inputCustomer := &models.ImportCustomerXls{
 			CardNumber:     cardNumber,
 			NIK:            nikNumber,
 			NIKCheck:       nikHidden,
-			FirstName:      data["first_name"].(string),
+			FirstName:      firstNameValue,
 			Collector:      collector,
 			Agencies:       agenciesName,
-			Address3:       data["address_3"].(string),
-			Address4:       data["address_4"].(string),
-			ZipCode:        data["zipcode"].(string),
+			Address3:       address3Value,
+			Address4:       address4Value,
+			ZipCode:        zipCodeValue,
 			ConcatCustomer: concatCustToUpper,
 			Files:          s3FilePath,
 			Created:        timeNow,

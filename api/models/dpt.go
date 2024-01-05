@@ -184,7 +184,7 @@ func (customer *ImportCustomerXls) GetMatchNik(db *sql.DB, tableName, agenciesNa
 	t2.nama nama,
 	t2.kel kelurahan,
 	t2.kec kecamatan from customer t1 
-	JOIN %s t2 ON t1.nik_cek = t2.ktp AND t1.first_name = t2.nama
+	JOIN %s t2 ON t1.nik_cek = t2.ktp
 	WHERE t1.files = $1 AND t1.agencies = $2
 	`, pq.QuoteIdentifier(tableName))
 
