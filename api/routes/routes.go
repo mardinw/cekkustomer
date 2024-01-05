@@ -58,7 +58,7 @@ func NewRoutes(db *sql.DB) *gin.Engine {
 		{
 			file.Use(middlewares.Auth)
 			file.POST("/import", files.ImportExcel(db))
-			file.GET("/export/:filename", files.ExportMatchExcel(db))
+			file.GET("/export/:filename", files.ExportMatchConcatExcel(db))
 			file.GET("/read/:filename", files.ReadFile(db))
 			file.GET("/list", files.GetListFolder)
 			file.DELETE("/:filename", files.DeleteFile(db))

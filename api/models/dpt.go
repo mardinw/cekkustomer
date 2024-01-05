@@ -94,8 +94,8 @@ func (customer *ImportCustomerXls) GetMatchConcatByName(db *sql.DB, tableName, a
 			&each.ZipCode,
 			&each.Kodepos,
 			&each.Nama,
-			&each.Kecamatan,
 			&each.Kelurahan,
+			&each.Kecamatan,
 		); err != nil {
 			log.Println("record not found")
 			return nil, err
@@ -155,8 +155,8 @@ func (customer *ImportCustomerXls) GetMatchConcat(db *sql.DB, tableName, agencie
 			&each.ZipCode,
 			&each.Kodepos,
 			&each.Nama,
-			&each.Kecamatan,
 			&each.Kelurahan,
+			&each.Kecamatan,
 		); err != nil {
 			log.Println("record not found")
 			return nil, err
@@ -218,8 +218,8 @@ func (customer *ImportCustomerXls) GetMatchNik(db *sql.DB, tableName, agenciesNa
 			&each.ZipCode,
 			&each.Kodepos,
 			&each.Nama,
-			&each.Kecamatan,
 			&each.Kelurahan,
+			&each.Kecamatan,
 		); err != nil {
 			log.Println("record not found")
 			return nil, err
@@ -284,8 +284,8 @@ func (customer *ImportCustomerXls) GetMatchNikByName(db *sql.DB, tableName, agen
 			&each.ZipCode,
 			&each.Kodepos,
 			&each.Nama,
-			&each.Kecamatan,
 			&each.Kelurahan,
+			&each.Kecamatan,
 		); err != nil {
 			log.Println("record not found")
 			return nil, err
