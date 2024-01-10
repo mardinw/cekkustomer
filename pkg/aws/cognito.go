@@ -187,6 +187,25 @@ func (c *AwsCognito) UpdateUserAttributes(email, attribute, value string) error 
 	return err
 }
 
+func (c *AwsCognito) PreferredUsernameAttributes(email, value string) error {
+	inputAttributes := []types.AttributeType{
+		{
+			Name:  aws.String("preferred_username"),
+			Value: aws.String(value),
+		},
+	}
+
+	input := &cognito.AdminUpdateUserAttributesInput{
+		UserPoolId:     aws.String(c.cognitoPoolId),
+		Username:       aws.String(email),
+		UserAttributes: inputAttributes,
+	}
+
+	_, err := c.cognitoClient.AdminUpdateUserAttributes(context.TODO(), input)
+
+	return err
+}
+
 func (c *AwsCognito) CheckUserAttributes(email string) ([]types.AttributeType, error) {
 
 	input := &cognito.AdminGetUserInput{
