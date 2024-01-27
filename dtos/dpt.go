@@ -42,4 +42,5 @@ type CheckDPTNIK struct {
 	Kodepos    int32  `json:"kodepos"`
 	Kelurahan  string `json:"kelurahan"`
 	Kecamatan  string `json:"kecamatan"`
+	KTP        string `json:"ktp"`
 }

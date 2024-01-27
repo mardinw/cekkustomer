@@ -183,7 +183,8 @@ func (customer *ImportCustomerXls) GetMatchNik(db *sql.DB, tableName, agenciesNa
 	t2.kodepos kodepos,
 	t2.nama nama,
 	t2.kel kelurahan,
-	t2.kec kecamatan from customer t1 
+	t2.kec kecamatan,
+	t2.ktp ktp from customer t1 
 	JOIN %s t2 ON t1.nik_cek = t2.ktp
 	WHERE t1.files = $1 AND t1.agencies = $2
 	`, pq.QuoteIdentifier(tableName))
@@ -220,6 +221,7 @@ func (customer *ImportCustomerXls) GetMatchNik(db *sql.DB, tableName, agenciesNa
 			&each.Nama,
 			&each.Kelurahan,
 			&each.Kecamatan,
+			&each.KTP,
 		); err != nil {
 			log.Println("record not found")
 			return nil, err
