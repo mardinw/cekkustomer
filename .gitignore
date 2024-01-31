@@ -1,5 +1,6 @@
 dpt.sql
 .env
 
+node_modules
 external/importxclxit
 external/exporttxclxit
